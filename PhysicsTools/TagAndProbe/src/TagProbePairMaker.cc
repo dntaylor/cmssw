@@ -19,6 +19,8 @@ tnp::TagProbePairMaker::TagProbePairMaker(const edm::ParameterSet &iConfig, edm:
   } else if (arbitration == "Random2") {
     arbitration_ = Random2;
     randGen_ = new TRandom2(7777);
+  } else if (arbitration == "HighestPt") {
+    arbitration_ = HighestPt;
   } else throw cms::Exception("Configuration") << "TagProbePairMakerOnTheFly: the only currently "
 					       << "allowed values for 'arbitration' are "
 					       << "'None', 'OneProbe', 'BestMass', 'Random2'\n";
@@ -78,7 +80,7 @@ tnp::TagProbePairMaker::arbitrate(TagProbePairs &pairs) const
 	  continue;
 	}
 
-	if (arbitration_ == OneProbe) {
+	if        (arbitration_ == OneProbe) {
 	  // invalidate this one
 	  it2->tag = reco::CandidateBaseRef(); --nclean;
 	  // remember to invalidate also the other one (but after finishing to check for duplicates)
@@ -90,6 +92,13 @@ tnp::TagProbePairMaker::arbitrate(TagProbePairs &pairs) const
 	  }
 	  // and invalidate it2
 	  it2->tag = reco::CandidateBaseRef(); --nclean;
+	} else if (arbitration_ == HighestPt) {
+          // but the best one in the first  iterator
+          if ( it2->probe->pt() > it->probe->pt()  ) {
+	    std::swap(*it, *it2);
+          }
+          // and invalidate it2
+          it2->tag = reco::CandidateBaseRef(); --nclean;
 	} else if (arbitration_ == Random2) {
 	  numberOfProbes++;
 	  if (numberOfProbes>1) {
