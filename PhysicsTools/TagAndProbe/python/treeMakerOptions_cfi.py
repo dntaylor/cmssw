@@ -21,13 +21,18 @@ def setModules(process, options):
     process.pileupReweightingProducer = pileupProducer.clone()
     
 ###################################################################                                                                               
-## ELECTRON MODULES                                                                                                                                    
+## Electron/Photon MODULES                                                                                                                                    
 ###################################################################                                    
     
     process.goodElectrons = cms.EDFilter("PATElectronRefSelector",
-                                         src = cms.InputTag(options['ELECTRON_COLL']),
-                                         cut = cms.string(options['ELECTRON_CUTS'])
+                                         src = cms.InputTag( options['ELECTRON_COLL'] ),
+                                         cut = cms.string(   options['ELECTRON_CUTS'] )
                                          )
+    process.goodPhotons =  cms.EDFilter("PATPhotonRefSelector",
+                                        src = cms.InputTag( options['PHOTON_COLL'] ),
+                                        cut = cms.string(   options['PHOTON_CUTS'] )
+                                        )
+
     
 ###################################################################                                                                     
 ## SUPERCLUSTER MODULES                                                     
@@ -90,6 +95,16 @@ def setModules(process, options):
                                                      isAND       = cms.bool(False)
                                                      )
     
+    process.goodPhotonsProbeHLT = cms.EDProducer("PatPhotonTriggerCandProducer",
+                                                 filterNames = options['TnPHLTProbeFilters'],
+                                                 inputs      = cms.InputTag("goodPhotons"),
+                                                 bits        = cms.InputTag('TriggerResults::HLT'),
+                                                 objects     = cms.InputTag('selectedPatTrigger'),
+                                                 dR          = cms.double(0.3),
+                                                 isAND       = cms.bool(True)
+                                                 )
+
+
     process.goodSuperClustersHLT = cms.EDProducer("RecoEcalCandidateTriggerCandProducer",
                                                   filterNames  = cms.vstring(options['TnPHLTProbeFilters']),
                                                   inputs       = cms.InputTag("goodSuperClusters"),
@@ -99,25 +114,32 @@ def setModules(process, options):
                                                   isAND        = cms.bool(True)
                                                   )
 
+
 ###################################################################
 ## TnP PAIRS
 ###################################################################
     
-    process.tagTightHLT = cms.EDProducer("CandViewShallowCloneCombiner",
-                                         decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeMeasureHLT@-"), 
-                                         checkCharge = cms.bool(True),
-                                         cut = cms.string("60<mass<120"),
-                                         )
+    process.tagTightHLT   = cms.EDProducer("CandViewShallowCloneCombiner",
+                                           decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeMeasureHLT@-"), 
+                                           checkCharge = cms.bool(True),
+                                           cut = cms.string("60<mass<120"),
+                                           )
     
-    process.tagTightSC = cms.EDProducer("CandViewShallowCloneCombiner",
-                                        decay = cms.string("goodElectronsTagHLT goodSuperClustersHLT"), 
-                                        checkCharge = cms.bool(False),
-                                        cut = cms.string("60<mass<120"),
-                                        )
+    process.tagTightSC    = cms.EDProducer("CandViewShallowCloneCombiner",
+                                           decay = cms.string("goodElectronsTagHLT goodSuperClustersHLT"), 
+                                           checkCharge = cms.bool(False),
+                                           cut = cms.string("60<mass<120"),
+                                           )
     
-    process.tagTightRECO = cms.EDProducer("CandViewShallowCloneCombiner",
-                                          decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeHLT@-"), 
-                                          checkCharge = cms.bool(True),
-                                          cut = cms.string("60<mass<120"),
-                                          )
+    process.tagTightEleID = cms.EDProducer("CandViewShallowCloneCombiner",
+                                           decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeHLT@-"), 
+                                           checkCharge = cms.bool(True),
+                                           cut = cms.string("60<mass<120"),
+                                           )
+    
+    process.tagTightPhoID = cms.EDProducer("CandViewShallowCloneCombiner",
+                                           decay = cms.string("goodElectronsTagHLT goodPhotonsProbeHLT"), 
+                                           checkCharge = cms.bool(False),
+                                           cut = cms.string("60<mass<120"),
+                                           )
     

@@ -21,8 +21,9 @@ ProbeVariablesToStore = cms.PSet(
 ## super cluster quantities
     probe_sc_energy = cms.string("superCluster.energy"),
     probe_sc_et     = cms.string("superCluster.energy*sin(superCluster.position.theta)"),    
-    probe_sc_eta    = cms.string("superCluster.eta"),
-    probe_sc_abseta = cms.string("abs(superCluster.eta)"),
+#    probe_sc_eta    = cms.string("-log(tan(superCluster.position.theta/2))"),
+#    probe_sc_eta    = cms.string("superCluster.eta"),
+#    probe_sc_abseta = cms.string("abs(superCluster.eta)"),
 
 #id based
     probe_Pho_full5x5x_r9   = cms.string("full5x5_r9"),
@@ -50,8 +51,8 @@ TagVariablesToStore = cms.PSet(
     ## super cluster quantities
     sc_energy = cms.string("superCluster.energy"),
     sc_et     = cms.string("superCluster.energy*sin(superCluster.position.theta)"),    
-    sc_eta    = cms.string("superCluster.eta"),
-    sc_abseta = cms.string("abs(superCluster.eta)"),
+#    sc_eta    = cms.string("superCluster.eta"),
+#    sc_abseta = cms.string("abs(superCluster.eta)"),
     Pho_full5x5x_r9   = cms.string("full5x5_r9"),
     Pho_r9            = cms.string("r9"),
     Pho_mva           = cms.InputTag("photonMVAValueMapProducer:PhotonMVAEstimatorRun2Spring15NonTrig50nsV2Values"),
@@ -65,7 +66,10 @@ CommonStuffForPhotonProbe = cms.PSet(
     addEventVariablesInfo   =  cms.bool(True),
     vertexCollection = cms.InputTag("offlineSlimmedPrimaryVertices"),
     beamSpot = cms.InputTag("offlineBeamSpot"),
-    pfMet = cms.InputTag("slimmedMETs"),
+#    pfMet = cms.InputTag("slimmedMETs"),
+    pfMet = cms.InputTag("slimmedMETsPuppi"),
+    rho = cms.InputTag("fixedGridRhoFastjetAll"),
+
     pairVariables =  cms.PSet(ZVariablesToStore),
     pairFlags     =  cms.PSet(
         mass60to120 = cms.string("60 < mass < 120")
@@ -78,11 +82,6 @@ mcTruthCommonStuff = cms.PSet(
     isMC        = cms.bool(True),
     #tagMatches  = cms.InputTag("McMatchTag"),
     motherPdgId = cms.vint32(),
-    #motherPdgId = cms.vint32(22,23), # g, Z
-    #motherPdgId = cms.vint32(443), # JPsi
-    #motherPdgId = cms.vint32(553), # Yupsilon
-    #makeMCUnbiasTree       = cms.bool(False),
-    #checkMotherInUnbiasEff = cms.bool(False),
     genParticles = cms.InputTag("prunedGenParticles"),
     useTauDecays = cms.bool(False),
     checkCharge = cms.bool(False),
