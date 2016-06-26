@@ -2,12 +2,12 @@ from CRABClient.UserUtilities import config, getUsernameFromSiteDB
 import sys
 config = config()
 
-submitVersion = "v1"
-doEleTree = 'doEleID=True'
-doPhoTree = 'doPhoID=False'
+submitVersion = "phov1"
+doEleTree = 'doEleID=False'
+doPhoTree = 'doPhoID=True'
 doHLTTree = 'doTrigger=False'
 
-mainOutputDir = '/store/group/phys_egamma/tnp/80X/Electrons_76Xids/%s' % submitVersion
+mainOutputDir = '/store/group/phys_egamma/tnp/80X/Photonss_76Xids/%s' % submitVersion
 
 config.General.transferLogs = False
 
