@@ -9,8 +9,10 @@ from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 def setIDs(process, options):
 
     dataFormat = DataFormat.MiniAOD
+    eleProducer = "PatElectronSelectorByValueMap"
     if (options['useAOD']):
         dataFormat = DataFormat.AOD
+        eleProducer = "GsfElectronSelectorByValueMap"
         
     switchOnVIDElectronIdProducer(process, dataFormat)
         
@@ -22,7 +24,9 @@ def setIDs(process, options):
     for idmod in my_id_modules:
         setupAllVIDIdsInModule(process, idmod, setupVIDElectronSelection)
 
-    process.goodElectronsPROBECutBasedVeto = cms.EDProducer("PatElectronSelectorByValueMap",
+
+
+    process.goodElectronsPROBECutBasedVeto = cms.EDProducer(eleProducer,
                                                             input     = cms.InputTag("goodElectrons"),
                                                             cut       = cms.string(options['ELECTRON_CUTS']),
                                                             selection = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
@@ -61,7 +65,7 @@ def setIDs(process, options):
     process.goodElectronsPROBECutBasedTight = process.goodElectronsPROBECutBasedVeto.clone()
     process.goodElectronsPROBECutBasedTight.selection = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-tight")
     
-    process.goodElectronsTAGCutBasedVeto = cms.EDProducer("PatElectronSelectorByValueMap",
+    process.goodElectronsTAGCutBasedVeto = cms.EDProducer(eleProducer,
                                                           input     = cms.InputTag("goodElectrons"),
                                                           cut       = cms.string(options['ELECTRON_TAG_CUTS']),
                                                           selection = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),

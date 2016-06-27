@@ -29,5 +29,6 @@
   <use   name="PhysicsTools/HepMCCandAlgos"/>
   <use   name="PhysicsTools/PatUtils"/>
   <use   name="PhysicsTools/PatAlgos"/>
+  <use   name="RecoEgamma/EgammaHLTAlgos"/>
 <flags CXXFLAGS="-O0 -g3 -fno-inline"></flags>
 </library>

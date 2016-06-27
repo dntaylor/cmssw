@@ -143,3 +143,45 @@ def setModules(process, options):
                                            cut = cms.string("60<mass<120"),
                                            )
     
+def setSequences(process, options):
+###################################################################
+## SEQUENCES
+###################################################################
+    process.tag_sequence = cms.Sequence(
+        process.goodElectrons                    +
+        process.egmGsfElectronIDSequence         +
+        process.goodElectronsTAGCutBasedLoose    +
+        process.goodElectronsTAGCutBasedTight    +
+        process.goodElectronsTagHLT
+        )
+
+    process.ele_sequence = cms.Sequence(
+        process.goodElectronsPROBECutBasedVeto   +
+        process.goodElectronsPROBECutBasedLoose  +
+        process.goodElectronsPROBECutBasedMedium +
+        process.goodElectronsPROBECutBasedTight  +
+        process.goodElectronsProbeHLT
+        )
+
+    process.hlt_sequence = cms.Sequence(
+        process.goodElectronsProbeMeasureHLT     +
+        process.goodElectronsMeasureHLT
+        )
+
+    process.pho_sequence = cms.Sequence(
+        process.goodPhotons                    +
+        process.egmPhotonIDSequence            +
+        process.photonIDValueMapProducer       +
+        process.goodPhotonsPROBECutBasedLoose  +
+        process.goodPhotonsPROBECutBasedMedium +
+        process.goodPhotonsPROBECutBasedTight  +
+        process.goodPhotonsPROBEMVA            +
+        process.goodPhotonsProbeHLT
+        )
+
+    process.sc_sequence = cms.Sequence( 
+        process.superClusterCands +
+        process.goodSuperClusters +
+        process.goodSuperClustersHLT +
+        process.GsfMatchedSuperClusterCands
+        )

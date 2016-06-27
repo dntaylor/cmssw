@@ -70,7 +70,7 @@ void MiniAODTriggerCandProducer<reco::GsfElectron, trigger::TriggerObject>::prod
     bool saveObj = true;
     TRef ref = (*inputs)[i];
 
-    std::cout << "REF:" << ref->eta() << " " << ref->phi() << " " << ref->et() << std::endl;
+    //    std::cout << "REF:" << ref->eta() << " " << ref->phi() << " " << ref->et() << std::endl;
     if (filterNames_.size() > 0) {
       unsigned int moduleFilterIndex = 9999;
       if (filterNames_[0] != "") {

@@ -44,6 +44,7 @@ def setModules(process, options):
 
     from PhysicsTools.TagAndProbe.pileupConfiguration_cfi import pileupProducer
     process.pileupReweightingProducer = pileupProducer.clone()
+    process.pileupReweightingProducer.pileupInfoTag = "addPileupInfo"
 
 ###################################################################                                                                               
 ## ELECTRON MODULES                                                                                                                                    
@@ -53,6 +54,15 @@ def setModules(process, options):
                                          src = cms.InputTag(options['ELECTRON_COLL']),
                                          cut = cms.string(options['ELECTRON_CUTS'])
                                          )
+
+
+    ### dummy in AOD (use miniAOD for photons)
+    process.goodPhotons =  cms.EDFilter("PhotonRefSelector",
+                                        src = cms.InputTag( options['PHOTON_COLL'] ),
+                                        cut = cms.string(   options['PHOTON_CUTS'] )
+                                        )
+
+    process.goodPhotonsProbeHLT = process.goodPhotons.clone()
     
 ###################################################################                                                                     
 ## SUPERCLUSTER MODULES                                                     
@@ -78,6 +88,20 @@ def setModules(process, options):
                                                          ReferenceElectronCollection = cms.untracked.InputTag("goodElectrons"),
                                                          cut = cms.string(options['SUPERCLUSTER_CUTS'])
                                                          )
+
+
+    process.recoEcalCandidateHelper = cms.EDProducer("RecoEcalCandidateVariableHelper",
+                                                     probes = cms.InputTag("superClusterCands"),
+                                                     countTracks = cms.bool( False ),
+                                                     trkIsoPtMin = cms.double( 0.5 ),
+                                                     trkIsoStripEndcap = cms.double( 0.03 ),
+                                                     trackProducer = cms.InputTag( "generalTracks" ),
+                                                     trkIsoStripBarrel = cms.double( 0.03 ),
+                                                     trkIsoConeSize = cms.double( 0.4 ),
+                                                     trkIsoVetoConeSize = cms.double( 0.06 ),
+                                                     trkIsoRSpan = cms.double( 999999.0 ),
+                                                     trkIsoZSpan = cms.double( 999999. )
+                                                     )
     
 ###################################################################
 ## TRIGGER MATCHING
@@ -132,21 +156,55 @@ def setModules(process, options):
 ## TnP PAIRS
 ###################################################################
     
-    process.tagTightHLT = cms.EDProducer("CandViewShallowCloneCombiner",
+    process.tagTightHLT   = cms.EDProducer("CandViewShallowCloneCombiner",
                                          decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeMeasureHLT@-"), 
                                          checkCharge = cms.bool(True),
                                          cut = cms.string("60<mass<120"),
                                          )
     
-    process.tagTightSC = cms.EDProducer("CandViewShallowCloneCombiner",
+    process.tagTightSC    = cms.EDProducer("CandViewShallowCloneCombiner",
                                         decay = cms.string("goodElectronsTagHLT goodSuperClustersHLT"), 
                                         checkCharge = cms.bool(False),
                                         cut = cms.string("60<mass<120"),
                                         )
     
-    process.tagTightRECO = cms.EDProducer("CandViewShallowCloneCombiner",
+    process.tagTightEleID = cms.EDProducer("CandViewShallowCloneCombiner",
                                           decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeHLT@-"), 
                                           checkCharge = cms.bool(True),
                                           cut = cms.string("60<mass<120"),
                                           )
     
+
+def setSequences(process, options):
+###################################################################
+## SEQUENCES
+###################################################################
+    process.tag_sequence = cms.Sequence(
+        process.goodElectrons                    +
+        process.egmGsfElectronIDSequence         +
+        process.goodElectronsTAGCutBasedLoose    +
+        process.goodElectronsTAGCutBasedTight    +
+        process.goodElectronsTagHLT
+        )
+
+    process.ele_sequence = cms.Sequence(
+        process.goodElectronsPROBECutBasedVeto   +
+        process.goodElectronsPROBECutBasedLoose  +
+        process.goodElectronsPROBECutBasedMedium +
+        process.goodElectronsPROBECutBasedTight  +
+        process.goodElectronsProbeHLT
+        )
+
+    process.hlt_sequence = cms.Sequence( )
+
+    process.pho_sequence = cms.Sequence( )
+
+    process.sc_sequence = cms.Sequence(
+        process.superClusterMerger      +
+        process.superClusterCands       +
+        process.recoEcalCandidateHelper +
+        process.goodSuperClusters       +
+        process.goodSuperClustersHLT    +
+        process.GsfMatchedSuperClusterCands
+        )
+

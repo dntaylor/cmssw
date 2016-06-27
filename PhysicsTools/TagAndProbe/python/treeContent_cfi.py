@@ -17,6 +17,8 @@ SCProbeVariablesToStore = cms.PSet(
     probe_sc_pt     = cms.string("pt"),
     probe_sc_et     = cms.string("et"),
     probe_sc_e      = cms.string("energy"),
+
+    probe_sc_tkIso  = cms.InputTag("recoEcalCandidateHelper:scTkIso"),
     )
 
 EleProbeVariablesToStore = cms.PSet(
@@ -28,22 +30,32 @@ EleProbeVariablesToStore = cms.PSet(
     probe_Ele_q      = cms.string("charge"),
     
     ## super cluster quantities
-    probe_sc_energy   = cms.string("superCluster.energy"),
-    probe_sc_et       = cms.string("superCluster.energy*sin(superClusterPosition.theta)"),    
-    probe_sc_eta      = cms.string("-log(tan(superCluster.position.theta/2))"),
-    probe_sc_abseta   = cms.string("abs(-log(tan(superCluster.position.theta/2)))"),
-    
+    probe_sc_energy     = cms.string("superCluster.energy"),
+    probe_sc_rawE       = cms.string("superCluster.rawEnergy"),
+    probe_sc_preshowerE = cms.string("superCluster.preshowerEnergy"),
+    probe_sc_et         = cms.string("superCluster.energy*sin(superClusterPosition.theta)"),    
+    probe_sc_eta        = cms.string("-log(tan(superCluster.position.theta/2))"),
+    probe_sc_abseta     = cms.string("abs(-log(tan(superCluster.position.theta/2)))"),
+    probe_sc_phi        = cms.string("superCluster.phi"),    
+    probe_sc_phiW       = cms.string("superCluster.phiWidth"),
+    probe_sc_etaW       = cms.string("superCluster.etaWidth"),
+
     #id based
-    probe_Ele_dEtaOut       = cms.string("deltaEtaSeedClusterTrackAtCalo"),
+#    probe_Ele_dEtaSeeOut       = cms.string("deltaEtaSeedClusterTrackAtCalo"),
     probe_Ele_dEtaIn        = cms.string("deltaEtaSuperClusterTrackAtVtx"),
     probe_Ele_dPhiIn        = cms.string("deltaPhiSuperClusterTrackAtVtx"),
-    probe_Ele_sigmaIEtaIEta = cms.string("sigmaIetaIeta"),
+    probe_Ele_dEtaSeed      = cms.string("deltaEtaSuperClusterTrackAtVtx+log(tan(superCluster.position.theta/2))-log(tan(superCluster.seed.position.theta/2))"),
+    probe_Ele_sieie         = cms.string("sigmaIetaIeta"),
+    probe_Ele_e1x5          = cms.string("e1x5"),
+    probe_Ele_e2x5          = cms.string("e2x5Max"),
+    probe_Ele_e5x5          = cms.string("e5x5"),
     probe_Ele_r9            = cms.string("r9"),
     probe_Ele_r9_5x5        = cms.string("full5x5_r9"),
     probe_Ele_sieie_5x5     = cms.string("full5x5_sigmaIetaIeta"),
     probe_Ele_hoe           = cms.string("hadronicOverEm"),
     probe_Ele_ooemoop       = cms.string("(1.0/ecalEnergy - eSuperClusterOverP/ecalEnergy)"),
 
+    probe_Ele_chisq         = cms.InputTag("eleVarHelper:chisq"),
     probe_Ele_mHits         = cms.InputTag("eleVarHelper:missinghits"),
     probe_Ele_dz            = cms.InputTag("eleVarHelper:dz"),
     probe_Ele_dxy           = cms.InputTag("eleVarHelper:dxy"),
@@ -54,6 +66,10 @@ EleProbeVariablesToStore = cms.PSet(
     probe_Ele_chIso         = cms.string("pfIsolationVariables().sumChargedHadronPt"),
     probe_Ele_phoIso        = cms.string("pfIsolationVariables().sumPhotonEt"),
     probe_Ele_neuIso        = cms.string("pfIsolationVariables().sumNeutralHadronEt"),
+    probe_Ele_ecalIso       = cms.string("ecalPFClusterIso"),
+    probe_Ele_hcalIso       = cms.string("hcalPFClusterIso"),
+    probe_Ele_trkIso        = cms.string("trackIso"),
+    probe_Ele_dr03TkSumPt   = cms.string("dr03TkSumPt"),
 
     # tracker
     probe_Ele_trkPt         = cms.string("gsfTrack().ptMode") 
@@ -77,7 +93,7 @@ PhoProbeVariablesToStore = cms.PSet(
     probe_Pho_full5x5x_r9   = cms.string("full5x5_r9"),
     probe_Pho_r9            = cms.string("r9"),
     probe_Pho_sieie         = cms.string("full5x5_sigmaIetaIeta"),
-    probe_Pho_sieip          = cms.InputTag("photonIDValueMapProducer:phoFull5x5SigmaIEtaIPhi"),
+    probe_Pho_sieip         = cms.InputTag("photonIDValueMapProducer:phoFull5x5SigmaIEtaIPhi"),
     probe_Pho_ESsigma       = cms.InputTag("photonIDValueMapProducer:phoESEffSigmaRR"),
     probe_Pho_hoe           = cms.string("hadronicOverEm"),
 
@@ -171,3 +187,19 @@ mcTruthCommonStuff = cms.PSet(
         ),      
     )
 
+
+
+def setupTnPVariablesForAOD():
+    mcTruthCommonStuff. genParticles                 = cms.InputTag("genParticles")
+
+    CommonStuffForSuperClusterProbe.pileupInfoTag    = cms.InputTag("addPileupInfo")
+    CommonStuffForSuperClusterProbe.vertexCollection = cms.InputTag("offlinePrimaryVerticesWithBS")
+    CommonStuffForSuperClusterProbe.pfMet            = cms.InputTag("pfMet")
+
+    CommonStuffForGsfElectronProbe.pileupInfoTag     = cms.InputTag("addPileupInfo")
+    CommonStuffForGsfElectronProbe.vertexCollection  = cms.InputTag("offlinePrimaryVerticesWithBS")
+    CommonStuffForGsfElectronProbe.pfMet             = cms.InputTag("pfMet")
+
+    CommonStuffForPhotonProbe.pileupInfoTag          = cms.InputTag("addPileupInfo")
+    CommonStuffForPhotonProbe.vertexCollection       = cms.InputTag("offlinePrimaryVerticesWithBS")
+    CommonStuffForPhotonProbe.pfMet                  = cms.InputTag("pfMet")
