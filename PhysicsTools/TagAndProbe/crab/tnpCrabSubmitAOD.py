@@ -7,7 +7,7 @@ submitVersion = "RECOv1"
 doEleTree = 'doEleID=False'
 doPhoTree = 'doPhoID=False'
 doHLTTree = 'doTrigger=False'
-doRECO    = 'doRECO=False'
+doRECO    = 'doRECO=True'
 
 mainOutputDir = '/store/group/phys_egamma/tnp/80X/RecoSF/%s' % submitVersion
 
@@ -23,9 +23,7 @@ config.Data.inputDBS = 'global'
 config.Data.publication = False
 
 #config.Data.publishDataName = 
-
 config.Site.storageSite = 'T2_CH_CERN'
-
 
 
 if __name__ == '__main__':
@@ -66,9 +64,9 @@ if __name__ == '__main__':
 #    config.Data.inputDataset    = '/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISpring16MiniAODv1-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v2/MINIAODSIM'
 #    submit(config)
 
- #   config.General.requestName  = 'ttbar_madgraph'
- #   config.Data.inputDataset    = '/TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM'
- #   submit(config)
+#    config.General.requestName  = 'ttbar_madgraph'
+#    config.Data.inputDataset    = '/TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM'
+#    submit(config)
 
     ##### now submit DATA
     config.Data.outLFNDirBase = '%s/%s/' % (mainOutputDir,'data')
