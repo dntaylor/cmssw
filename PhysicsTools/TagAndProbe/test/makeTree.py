@@ -75,7 +75,7 @@ options['ELECTRON_CUTS']        = "ecalEnergy*sin(superClusterPosition.theta)>5.
 options['SUPERCLUSTER_CUTS']    = "abs(eta)<2.5 && !(1.4442< abs(eta) <1.566) && et>10.0"
 options['PHOTON_CUTS']          = "(abs(-log(tan(superCluster.position.theta/2)))<=2.5) && pt> 10"
 
-options['ELECTRON_TAG_CUTS']    = "(abs(-log(tan(superClusterPosition.theta/2))) <= 2.5) && !(1.4442<=abs(-log(tan(superClusterPosition.theta/2)))<=1.566) && pt >= 30.0"
+options['ELECTRON_TAG_CUTS']    = "(abs(-log(tan(superCluster.position.theta/2)))<=2.1) && !(1.4442<=abs(-log(tan(superClusterPosition.theta/2)))<=1.566) && pt >= 30.0"
 
 options['MAXEVENTS']            = cms.untracked.int32(varOptions.maxEvents) 
 options['DoTrigger']            = cms.bool( varOptions.doTrigger )
