@@ -2,12 +2,12 @@ from CRABClient.UserUtilities import config, getUsernameFromSiteDB
 import sys
 config = config()
 
-submitVersion = "phov1"
+submitVersion = "phov2"
 doEleTree = 'doEleID=False'
 doPhoTree = 'doPhoID=True'
 doHLTTree = 'doTrigger=False'
 
-mainOutputDir = '/store/group/phys_egamma/tnp/80X/Photonss_76Xids/%s' % submitVersion
+mainOutputDir = '/store/group/phys_egamma/tnp/80X/Photons_76Xids/%s' % submitVersion
 
 config.General.transferLogs = False
 
@@ -73,8 +73,8 @@ if __name__ == '__main__':
     ##### now submit DATA
     config.Data.outLFNDirBase = '%s/%s/' % (mainOutputDir,'data')
     config.Data.splitting     = 'LumiBased'
-    config.Data.lumiMask      = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/Cert_271036-275125_13TeV_PromptReco_Collisions16_JSON.txt  '
-    config.Data.unitsPerJob   = 50
+    config.Data.lumiMask      = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/Cert_271036-275783_13TeV_PromptReco_Collisions16_JSON_NoL1T.txt'
+    config.Data.unitsPerJob   = 100
     config.JobType.pyCfgParams  = ['isMC=False',doEleTree,doPhoTree,doHLTTree]
 
     config.General.requestName  = '2016_RunB'
