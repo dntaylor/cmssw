@@ -58,6 +58,7 @@ PileupWeightProducer::PileupWeightProducer(const edm::ParameterSet& iConfig) {
   for(size_t ib = 0; ib<pileupData_.size(); ++ib) {
     pileupWeights_.push_back(pileupData_[ib] * scl / pileupMC_[ib]);
     //std::cout << pileupWeights_.back() << std::endl;
+    if( pileupMC_[ib] < 1e-6) pileupWeights_[pileupWeights_.size()-1] = 0;
   }
 
   produces<double>( "pileupWeights" ).setBranchAlias( "pileupWeights" );
@@ -76,7 +77,8 @@ void PileupWeightProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   if(!iEvent.isRealData() ) {
     iEvent.getByToken(pileupInfoTag_, PupInfo);
     int nPUtrue = PupInfo->begin()->getTrueNumInteractions();
-    *pileupWeight = pileupWeights_[nPUtrue+1]; // NOT 100% sure
+    //    *pileupWeight = pileupWeights_[nPUtrue+1]; // NOT 100% sure
+    *pileupWeight = pileupWeights_[nPUtrue]; // most likely better estimate
   }
 
   iEvent.put(pileupWeight, "pileupWeights"); 

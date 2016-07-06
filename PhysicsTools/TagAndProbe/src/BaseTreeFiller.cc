@@ -189,6 +189,11 @@ void tnp::BaseTreeFiller::init(const edm::Event &iEvent) const {
       PUweight_ = (*weightPU);
     else 
       PUweight_ = 1.0;
+
+    if( TMath::IsNaN(PUweight_) == 1 || PUweight_ == TMath::Infinity() ) {
+      std::cerr << " Abnormal PU weight : PU weight = " << PUweight_ << "  -- corrected to 1 " << std::endl;
+      PUweight_ = 1;
+    }
   }
   
   if (addEventVariablesInfo_) {
