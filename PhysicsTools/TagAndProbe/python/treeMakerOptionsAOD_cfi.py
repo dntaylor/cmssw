@@ -69,8 +69,11 @@ def setModules(process, options):
 ###################################################################         
     process.superClusterMerger =  cms.EDProducer("EgammaSuperClusterMerger",
                                                  src = cms.VInputTag(cms.InputTag("particleFlowSuperClusterECAL:particleFlowSuperClusterECALBarrel"),
-                                                                     cms.InputTag("particleFlowSuperClusterECAL:particleFlowSuperClusterECALEndcapWithPreshower"))
+                                                                     cms.InputTag("particleFlowSuperClusterECAL:particleFlowSuperClusterECALEndcapWithPreshower"),
+#                                                                     cms.InputTag("particleFlowEGamma"),
+                                                                     ),
                                                  )
+    
     
     process.superClusterCands = cms.EDProducer("ConcreteEcalCandidateProducer",
                                                src = cms.InputTag("superClusterMerger"),
