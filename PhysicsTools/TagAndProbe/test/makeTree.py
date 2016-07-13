@@ -211,6 +211,7 @@ if (options['DoPhoID']):
     print "  -- Producing photon SF tree      -- "
 
 if (options['DoTrigger']):
+    process.cand_sequence += process.ele_sequence
     process.cand_sequence += process.hlt_sequence
     print "  -- Producing HLT efficiency tree -- "
 
