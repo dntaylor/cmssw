@@ -1,12 +1,7 @@
 from PhysicsTools.SelectorUtils.centralIDRegistry import central_id_registry
 
-import FWCore.ParameterSet.Config as cms
-
 # Common functions and classes for ID definition are imported here:
-from RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_tools \
-    import ( EleHLTSelection_V1,
-             IsolationCutInputs_V2,
-             configureVIDCutBasedEleHLTPreselection_V1 )             
+from RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_tools import *
 
 #
 # Set of requirements tighter than HLT, meant to keep HLT efficiency high once this

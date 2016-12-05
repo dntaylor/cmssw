@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <string>
+#include <TROOT.h>
 #include "TMVA/Factory.h"
 #include "TMVA/Tools.h"
 #include "TMVA/Reader.h"
@@ -102,8 +103,8 @@ class ElectronMVAEstimatorRun2Spring16GeneralPurpose : public AnyMVAEstimatorRun
 
   virtual int getNCategories() const override { return nCategories; }
   bool isEndcapCategory( int category ) const;
-  virtual const std::string& getName() const override final { return name_; }
-  virtual const std::string& getTag() const override final { return tag_; }
+  virtual const std::string& getName() const override final { return _name; }
+  virtual const std::string& getTag() const override final { return _tag; }
 
   // Functions that should work on both pat and reco electrons
   // (use the fact that pat::Electron inherits from reco::GsfElectron)
@@ -126,27 +127,27 @@ class ElectronMVAEstimatorRun2Spring16GeneralPurpose : public AnyMVAEstimatorRun
   // MVA name. This is a unique name for this MVA implementation.
   // It will be used as part of ValueMap names.
   // For simplicity, keep it set to the class name.
-  const std::string name_ = "ElectronMVAEstimatorRun2Spring16GeneralPurpose";
+  const std::string _name = "ElectronMVAEstimatorRun2Spring16GeneralPurpose";
   // MVA tag. This is an additional string variable to distinguish
   // instances of the estimator of this class configured with different
   // weight files.
-  const std::string tag_;
+  const std::string _tag;
 
   // Data members
-  std::vector< std::unique_ptr<const GBRForest> > gbrForest_s;
+  std::vector< std::unique_ptr<const GBRForest> > _gbrForests;
 
   // All variables needed by this MVA
-  const std::string MethodName_;
-  AllVariables allMVAVars_;
+  const std::string _MethodName;
+  AllVariables _allMVAVars;
 
   //
   // Declare all tokens that will be needed to retrieve misc
   // data from the event content required by this MVA
   //
-  const edm::InputTag beamSpotLabel_;
+  const edm::InputTag _beamSpotLabel;
   // Conversions in AOD and miniAOD have different names
-  const edm::InputTag conversionsLabelAOD_;
-  const edm::InputTag conversionsLabelMiniAOD_;
+  const edm::InputTag _conversionsLabelAOD;
+  const edm::InputTag _conversionsLabelMiniAOD;
   
   
 };

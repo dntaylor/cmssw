@@ -23,16 +23,16 @@ public:
 
 private:
   // Cut values
-  const float isoCutEBLowPt_,isoCutEBHighPt_,isoCutEELowPt_,isoCutEEHighPt_;
+  const float _isoCutEBLowPt,_isoCutEBHighPt,_isoCutEELowPt,_isoCutEEHighPt;
   // Configuration
-  const int     isoType_;
-  const float   ptCutOff_;
-  const float   barrelCutOff_;
-  bool          isRelativeIso_;
+  const int     _isoType;
+  const float   _ptCutOff;
+  const float   _barrelCutOff;
+  bool          _isRelativeIso;
   // Effective area constants
-  EffectiveAreas effectiveAreas_;
+  EffectiveAreas _effectiveAreas;
   // The rho
-  edm::Handle< double > rhoHandle_;
+  edm::Handle< double > _rhoHandle;
 
   constexpr static char rhoString_     [] = "rho";
 };
@@ -45,15 +45,15 @@ DEFINE_EDM_PLUGIN(CutApplicatorFactory,
 
 GsfEleCalPFClusterIsoCut::GsfEleCalPFClusterIsoCut(const edm::ParameterSet& c) :
   CutApplicatorWithEventContentBase(c),
-  isoCutEBLowPt_(c.getParameter<double>("isoCutEBLowPt")),
-  isoCutEBHighPt_(c.getParameter<double>("isoCutEBHighPt")),
-  isoCutEELowPt_(c.getParameter<double>("isoCutEELowPt")),
-  isoCutEEHighPt_(c.getParameter<double>("isoCutEEHighPt")),
-  isoType_(c.getParameter<int>("isoType")),
-  ptCutOff_(c.getParameter<double>("ptCutOff")),
-   barrelCutOff_(c.getParameter<double>("barrelCutOff")),
-  isRelativeIso_(c.getParameter<bool>("isRelativeIso")),
-  effectiveAreas_( (c.getParameter<edm::FileInPath>("effAreasConfigFile")).fullPath())
+  _isoCutEBLowPt(c.getParameter<double>("isoCutEBLowPt")),
+  _isoCutEBHighPt(c.getParameter<double>("isoCutEBHighPt")),
+  _isoCutEELowPt(c.getParameter<double>("isoCutEELowPt")),
+  _isoCutEEHighPt(c.getParameter<double>("isoCutEEHighPt")),
+  _isoType(c.getParameter<int>("isoType")),
+  _ptCutOff(c.getParameter<double>("ptCutOff")),
+   _barrelCutOff(c.getParameter<double>("barrelCutOff")),
+  _isRelativeIso(c.getParameter<bool>("isRelativeIso")),
+  _effectiveAreas( (c.getParameter<edm::FileInPath>("effAreasConfigFile")).fullPath())
 {
   
   edm::InputTag rhoTag = c.getParameter<edm::InputTag>("rho");
@@ -69,7 +69,7 @@ void GsfEleCalPFClusterIsoCut::setConsumes(edm::ConsumesCollector& cc) {
 
 void GsfEleCalPFClusterIsoCut::getEventContent(const edm::EventBase& ev) {  
 
-  ev.getByLabel(contentTags_[rhoString_],rhoHandle_);
+  ev.getByLabel(contentTags_[rhoString_],_rhoHandle);
 }
 
 CutApplicatorBase::result_type 
@@ -87,18 +87,18 @@ operator()(const reco::GsfElectronPtr& cand) const{
   }
 
   const float isoCut =
-    ( cand->pt() < ptCutOff_ ?
-      ( absEta < barrelCutOff_ ? isoCutEBLowPt_ : isoCutEELowPt_ ) 
+    ( cand->pt() < _ptCutOff ?
+      ( absEta < _barrelCutOff ? _isoCutEBLowPt : _isoCutEELowPt ) 
       :
-      ( absEta < barrelCutOff_ ? isoCutEBHighPt_ : isoCutEEHighPt_ ) );
+      ( absEta < _barrelCutOff ? _isoCutEBHighPt : _isoCutEEHighPt ) );
 
-  const float  eA = effectiveAreas_.getEffectiveArea( absEta );
-  const float rho = rhoHandle_.isValid() ? (float)(*rhoHandle_) : 0; // std::max likes float arguments
+  const float  eA = _effectiveAreas.getEffectiveArea( absEta );
+  const float rho = _rhoHandle.isValid() ? (float)(*_rhoHandle) : 0; // std::max likes float arguments
 
   float isoValue = -999;
-  if( isoType_ == ISO_ECAL ){
+  if( _isoType == ISO_ECAL ){
     isoValue = elPat->ecalPFClusterIso();
-  }else if( isoType_ == ISO_HCAL ){
+  }else if( _isoType == ISO_HCAL ){
     isoValue = elPat->hcalPFClusterIso();
   }else{
     throw cms::Exception("ERROR: unknown type requested for PF cluster isolation.")
@@ -108,7 +108,7 @@ operator()(const reco::GsfElectronPtr& cand) const{
   
   // Apply the cut and return the result
   // Scale by pT if the relative isolation is requested but avoid division by 0
-  return isoValueCorr < isoCut*(isRelativeIso_ ? cand->pt() : 1.);
+  return isoValueCorr < isoCut*(_isRelativeIso ? cand->pt() : 1.);
 }
 
 double GsfEleCalPFClusterIsoCut::value(const reco::CandidatePtr& cand) const {
@@ -124,13 +124,13 @@ double GsfEleCalPFClusterIsoCut::value(const reco::CandidatePtr& cand) const {
       << std::endl << std::endl;
   }
 
-  const float  eA = effectiveAreas_.getEffectiveArea( absEta );
-  const float rho = rhoHandle_.isValid() ? (float)(*rhoHandle_) : 0; // std::max likes float arguments
+  const float  eA = _effectiveAreas.getEffectiveArea( absEta );
+  const float rho = _rhoHandle.isValid() ? (float)(*_rhoHandle) : 0; // std::max likes float arguments
 
   float isoValue = -999;
-  if( isoType_ == ISO_ECAL ){
+  if( _isoType == ISO_ECAL ){
     isoValue = elPat->ecalPFClusterIso();
-  }else if( isoType_ == ISO_HCAL ){
+  }else if( _isoType == ISO_HCAL ){
     isoValue = elPat->hcalPFClusterIso();
   }else{
     throw cms::Exception("ERROR: unknown type requested for PF cluster isolation.")
@@ -139,7 +139,7 @@ double GsfEleCalPFClusterIsoCut::value(const reco::CandidatePtr& cand) const {
   float isoValueCorr = std::max(0.0f, isoValue - rho*eA);
   
   // Divide by pT if the relative isolation is requested
-  if( isRelativeIso_ )
+  if( _isRelativeIso )
     isoValueCorr /= ele->pt();
 
   // Apply the cut and return the result

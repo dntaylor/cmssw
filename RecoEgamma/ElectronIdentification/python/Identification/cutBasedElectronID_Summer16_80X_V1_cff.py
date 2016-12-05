@@ -1,12 +1,7 @@
 from PhysicsTools.SelectorUtils.centralIDRegistry import central_id_registry
 
-import FWCore.ParameterSet.Config as cms
-
 # Common functions and classes for ID definition are imported here:
-from RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_tools \
-    import ( EleWorkingPoint_V3,
-             IsolationCutInputs_V2,
-             configureVIDCutBasedEleID_V3 )
+from RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_tools import *
 
 #
 # The ID cuts below are optimized IDs on Spring16 simulation with 80X-based production
