@@ -71,10 +71,13 @@ if statusOut != None:
     for job in statusOut['jobs']:
         jobId = int(job)
         state = statusOut['jobs'][job]['State']
-#        print ' job %d : status: %s ' % (jobId,state) 
+        print ' job %d : status: %s ' % (jobId,state) 
         if state == 'finished' :
-#            print '   -> adding  file ', filelist[jobId] 
+            print '   -> adding  file jobID:  ', jobId
             filelistOnlyFinished.append( filelist[jobId] )
+#        if state == 'transferring' and jobId in filelist.keys() : 
+#            filelistOnlyFinished.append( filelist[jobId] )
+#            print 'WARNING adding transferring file... you should remove them unless you have a good reason to.'
 
 
 ###################################################################
@@ -92,7 +95,7 @@ if checkReport:
     nEvtsRead          = reportOut['numEventsRead']
     lumiProccessedFile = '%s/%s/%s' % (os.getcwd(),dirToCheck,'results/processedLumis.json')
     
-
+#sys.exit(0)
 
 ###################################################################
 ##############  hAdd
@@ -102,18 +105,18 @@ outFile = '%s/TnPTree_%s_%s.root' % (outDir,dasDataset,config.General.requestNam
 print 'hadd will be saved to %s ' % outFile
 print ' - if file is moved properly to eos one should remove it (not automated for now)'
 
-haddCommand = ['hadd','-f',outFile]
-haddCommand += filelistOnlyFinished
-
-subprocess.call(haddCommand)
-subprocess.call(['cp',outFile,'eos/cms/%s'%config.Data.outLFNDirBase])
-
 dataset = {}
 dataset['campaign'] = config.General.workArea
-dataset['dataset']  = dasDataset
+dataset['dataset']  = '%s_%s' % ( dasDataset, config.General.requestName )
 dataset['file' ]    = '%s/%s' % (config.Data.outLFNDirBase,os.path.basename(outFile))
 dataset['nEvts']    = nEvtsRead
 dataset['lumiProcessedFile' ]  = lumiProccessedFile
 dataset['lumi' ]    = -1
 print dataset
+
+haddCommand = ['hadd','-f',outFile]
+haddCommand += filelistOnlyFinished
+
+subprocess.call(haddCommand)
+subprocess.call(['mv',outFile,'eos/cms/%s'%config.Data.outLFNDirBase])
 

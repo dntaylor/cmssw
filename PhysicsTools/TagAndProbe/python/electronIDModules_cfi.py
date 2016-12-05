@@ -15,16 +15,23 @@ def setIDs(process, options):
         eleProducer = "GsfElectronSelectorByValueMap"
         
     switchOnVIDElectronIdProducer(process, dataFormat)
-        
+
     # define which IDs we want to produce
-    my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff',
-                     'RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV60_cff',
-                     'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff']
+    my_id_modules = [
+        'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff',
+        'RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV60_cff',
+        'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Spring15_25ns_nonTrig_V1_cff',
+        ]
+
+    ### add only miniAOD supported IDs
+    if not options['useAOD'] :
+        my_id_modules.append( 'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronHLTPreselecition_Summer16_V1_cff' )
                  
     for idmod in my_id_modules:
         setupAllVIDIdsInModule(process, idmod, setupVIDElectronSelection)
 
-
+    process.egmGsfElectronIDs.physicsObjectSrc     = cms.InputTag(options['ELECTRON_COLL'])
+    process.electronMVAValueMapProducer.srcMiniAOD = cms.InputTag(options['ELECTRON_COLL'])
 
     process.goodElectronsPROBECutBasedVeto = cms.EDProducer(eleProducer,
                                                             input     = cms.InputTag("goodElectrons"),
@@ -32,7 +39,7 @@ def setIDs(process, options):
                                                             selection = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-veto"),
                                                             id_cut    = cms.bool(True)
                                                             )
-
+    
     ######################################################################################
     ## MODULES FOR N-1 CUT BASED STUDIES
     ######################################################################################
@@ -58,6 +65,8 @@ def setIDs(process, options):
     #                                                    cutNamesToMask = cms.vstring("GsfEleDEtaInCut_0", "GsfEleDPhiInCut_0")
     #                                                    )
     
+    process.goodElectronsPROBEHLTsafe = process.goodElectronsPROBECutBasedVeto.clone()
+    process.goodElectronsPROBEHLTsafe.selection = cms.InputTag("egmGsfElectronIDs:cutBasedElectronHLTPreselection-Summer16-V1")
     process.goodElectronsPROBECutBasedLoose = process.goodElectronsPROBECutBasedVeto.clone()
     process.goodElectronsPROBECutBasedLoose.selection = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Spring15-25ns-V1-standalone-loose")
     process.goodElectronsPROBECutBasedMedium = process.goodElectronsPROBECutBasedVeto.clone()

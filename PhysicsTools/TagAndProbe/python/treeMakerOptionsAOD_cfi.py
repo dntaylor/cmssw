@@ -1,17 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-def setModules(process, options):
-
-    process.sampleInfo = cms.EDProducer("tnp::SampleInfoTree",
-                                        #vertexCollection = cms.InputTag("offlineSlimmedPrimaryVertices"),
-                                        genInfo = cms.InputTag("generator")
-                                        )
-
-    process.eleVarHelper = cms.EDProducer("GsfElectronVariableHelper",
-                                          probes = cms.InputTag(options['ELECTRON_COLL']),
-                                          vertexCollection = cms.InputTag("offlinePrimaryVertices")
-                                          )
-
+def setupHLT(process,options) :
     process.hltVarHelper = cms.EDProducer("GsfElectronHLTVariableHelper",
                                           probes = cms.InputTag(options['ELECTRON_COLL']),
                                           hltCandidateCollection = cms.InputTag("hltEgammaCandidates"),
@@ -37,10 +26,30 @@ def setModules(process, options):
                                                                        "hltEgammaGsfTrackVars:MissingHits")
                                           )
 
+
+
+
+
+def setModules(process, options):
+
+    process.sampleInfo = cms.EDProducer("tnp::SampleInfoTree",
+                                        #vertexCollection = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                        genInfo = cms.InputTag("generator")
+                                        )
+
+    process.eleVarHelper = cms.EDProducer("GsfElectronVariableHelper",
+                                          probes = cms.InputTag(options['ELECTRON_COLL']),
+                                          vertexCollection = cms.InputTag("offlinePrimaryVertices"),
+                                          l1EGColl = cms.InputTag("caloStage2Digis:EGamma")
+                                          )
+
+#    setupHLT()
+
     from HLTrigger.HLTfilters.hltHighLevel_cfi import hltHighLevel
     process.hltFilter = hltHighLevel.clone()
     process.hltFilter.throw = cms.bool(True)
     process.hltFilter.HLTPaths = options['TnPPATHS']
+    process.hltFilter.TriggerResultsTag = cms.InputTag("TriggerResults","",options['HLTProcessName'])
 
     from PhysicsTools.TagAndProbe.pileupConfiguration_cfi import pileupProducer
     process.pileupReweightingProducer = pileupProducer.clone()
@@ -109,11 +118,13 @@ def setModules(process, options):
 ###################################################################
 ## TRIGGER MATCHING
 ###################################################################
+
+    print 'Trigger collections: ','TriggerResults::' + options['HLTProcessName'] 
     
     process.goodElectronsTagHLT = cms.EDProducer("GsfElectronTriggerCandProducer",
                                                  filterNames = cms.vstring(options['TnPHLTTagFilters']),
                                                  inputs      = cms.InputTag("goodElectronsTAGCutBasedTight"),
-                                                 bits        = cms.InputTag('TriggerResults::HLT'),
+                                                 bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                                  objects     = cms.InputTag('hltTriggerSummaryAOD'),
                                                  dR          = cms.double(0.3),
                                                  isAND       = cms.bool(True)
@@ -122,7 +133,7 @@ def setModules(process, options):
     process.goodElectronsProbeHLT = cms.EDProducer("GsfElectronTriggerCandProducer",
                                                    filterNames = cms.vstring(options['TnPHLTProbeFilters']),
                                                    inputs      = cms.InputTag("goodElectrons"),
-                                                   bits        = cms.InputTag('TriggerResults::HLT'),
+                                                   bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                                    objects     = cms.InputTag('hltTriggerSummaryAOD'),
                                                    dR          = cms.double(0.3),
                                                    isAND       = cms.bool(True)
@@ -131,7 +142,7 @@ def setModules(process, options):
     process.goodElectronsProbeMeasureHLT = cms.EDProducer("GsfElectronTriggerCandProducer",
                                                           filterNames = cms.vstring(options['TnPHLTProbeFilters']),
                                                           inputs      = cms.InputTag("goodElectrons"),
-                                                          bits        = cms.InputTag('TriggerResults::HLT'),
+                                                          bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                                           objects     = cms.InputTag('hltTriggerSummaryAOD'),
                                                           dR          = cms.double(0.3),
                                                           isAND       = cms.bool(True)
@@ -140,7 +151,7 @@ def setModules(process, options):
     process.goodElectronsMeasureHLT = cms.EDProducer("GsfElectronTriggerCandProducer",
                                                      filterNames = cms.vstring(options['HLTFILTERTOMEASURE']),
                                                      inputs      = cms.InputTag("goodElectronsProbeMeasureHLT"),
-                                                     bits        = cms.InputTag('TriggerResults::HLT'),
+                                                     bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                                      objects     = cms.InputTag('hltTriggerSummaryAOD'),
                                                      dR          = cms.double(0.3),
                                                      isAND       = cms.bool(False)
@@ -149,7 +160,7 @@ def setModules(process, options):
     process.goodSuperClustersHLT = cms.EDProducer("RecoEcalCandidateTriggerCandProducer",
                                                   filterNames  = cms.vstring(options['TnPHLTProbeFilters']),
                                                   inputs       = cms.InputTag("goodSuperClusters"),
-                                                  bits         = cms.InputTag('TriggerResults::HLT'),
+                                                  bits         = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                                   objects      = cms.InputTag('hltTriggerSummaryAOD'),
                                                   dR           = cms.double(0.3),
                                                   isAND        = cms.bool(True)
@@ -182,21 +193,17 @@ def setSequences(process, options):
 ###################################################################
 ## SEQUENCES
 ###################################################################
+    process.init_sequence = cms.Sequence( )
+
     process.tag_sequence = cms.Sequence(
         process.goodElectrons                    +
         process.egmGsfElectronIDSequence         +
-        process.goodElectronsTAGCutBasedLoose    +
+#        process.goodElectronsTAGCutBasedLoose    +
         process.goodElectronsTAGCutBasedTight    +
         process.goodElectronsTagHLT
         )
 
-    process.ele_sequence = cms.Sequence(
-        process.goodElectronsPROBECutBasedVeto   +
-        process.goodElectronsPROBECutBasedLoose  +
-        process.goodElectronsPROBECutBasedMedium +
-        process.goodElectronsPROBECutBasedTight  +
-        process.goodElectronsProbeHLT
-        )
+    process.ele_sequence = cms.Sequence( )
 
     process.hlt_sequence = cms.Sequence( )
 

@@ -72,8 +72,8 @@ EleProbeVariablesToStore = cms.PSet(
     probe_Ele_dr03TkSumPt   = cms.string("dr03TkSumPt"),
 
     # tracker
-    probe_Ele_trkPt         = cms.string("gsfTrack().ptMode") 
-
+    probe_Ele_trkPt         = cms.string("gsfTrack().ptMode"),
+    probe_Ele_3charge       = cms.string("chargeInfo().isGsfCtfScPixConsistent"),
     )
 
 PhoProbeVariablesToStore = cms.PSet(

@@ -2,7 +2,7 @@ from CRABClient.UserUtilities import config, getUsernameFromSiteDB
 import sys
 config = config()
 
-submitVersion = "RECOv3"
+submitVersion = "RECOSFs_2016"
 
 doEleTree = 'doEleID=False'
 doPhoTree = 'doPhoID=False'
@@ -52,12 +52,15 @@ if __name__ == '__main__':
     config.JobType.pyCfgParams  = ['isMC=True','isAOD=True',doEleTree,doPhoTree,doHLTTree,doRECO]
 
     
-    config.General.requestName  = 'DYToLL_mcAtNLO'
-    config.Data.inputDataset    = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM'
-    submit(config)
+#    config.General.requestName  = 'DYToLL_mcAtNLO'
+#    config.Data.inputDataset    = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM'
+#    submit(config)
+#    config.General.requestName  = 'DYToLL_madgraph'
+#    config.Data.inputDataset    = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3_ext1-v1/AODSIM'
+#    submit(config)
 
-    config.General.requestName  = 'DYToLL_madgraph'
-    config.Data.inputDataset    = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3_ext1-v1/AODSIM'
+    config.General.requestName  = 'DYToLL_madgraph_Winter2017'
+    config.Data.inputDataset    = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16DR80Premix-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/AODSIM'
     submit(config)
 
 #    config.General.requestName  = 'WJets_madgraph'
@@ -71,10 +74,47 @@ if __name__ == '__main__':
     ##### now submit DATA
     config.Data.outLFNDirBase = '%s/%s/' % (mainOutputDir,'data')
     config.Data.splitting     = 'LumiBased'
-    config.Data.lumiMask      = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/Cert_271036-275783_13TeV_PromptReco_Collisions16_JSON_NoL1T.txt'
+    config.Data.lumiMask      = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/ReReco/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt'
     config.Data.unitsPerJob   = 100
-    config.JobType.pyCfgParams  = ['isMC=False','isAOD=True',doEleTree,doPhoTree,doHLTTree,doRECO]
+    config.JobType.pyCfgParams  = ['isMC=False','isAOD=True',doEleTree,doPhoTree,doHLTTree,doRECO,'GT=80X_dataRun2_2016SeptRepro_v4']
 
-    config.General.requestName  = '2016_RunB'
-    config.Data.inputDataset    = '/SingleElectron/Run2016B-PromptReco-v2/AOD'
+    config.General.requestName  = '2016rereco_RunB'
+    config.Data.inputDataset    = '/SingleElectron/Run2016B-23Sep2016-v3/AOD'
     submit(config)
+
+    config.General.requestName  = '2016rereco_RunC'
+    config.Data.inputDataset    = '/SingleElectron/Run2016C-23Sep2016-v1/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016rereco_RunD'
+    config.Data.inputDataset    = '/SingleElectron/Run2016D-23Sep2016-v1/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016rereco_RunE'
+    config.Data.inputDataset    = '/SingleElectron/Run2016E-23Sep2016-v1/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016rereco_RunF'
+    config.Data.inputDataset    = '/SingleElectron/Run2016F-23Sep2016-v1/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016rereco_RunG'
+    config.Data.inputDataset    = '/SingleElectron/Run2016G-23Sep2016-v1/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016prompt_RunHv1'
+    config.Data.inputDataset    = '/SingleElectron/Run2016H-PromptReco-v1/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016prompt_RunHv2'
+    config.Data.inputDataset    = '/SingleElectron/Run2016H-PromptReco-v2/AOD'
+    submit(config)
+
+    config.General.requestName  = '2016prompt_RunHv3'
+    config.Data.inputDataset    = '/SingleElectron/Run2016H-PromptReco-v3/AOD'
+    submit(config)
+
+
+
+
+    

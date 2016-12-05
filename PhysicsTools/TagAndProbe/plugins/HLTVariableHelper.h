@@ -30,6 +30,7 @@ public:
   
 private:
   edm::EDGetTokenT<TCollection> probesToken_;
+  edm::EDGetTokenT<double> rhoToken_;
   edm::EDGetTokenT<std::vector<reco::RecoEcalCandidate> > hltCandToken_;
   std::vector<edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap> > mapsToken_;
   
@@ -39,8 +40,9 @@ private:
 };
 
 template <class T>
-HLTVariableHelper<T>::HLTVariableHelper(const edm::ParameterSet & iConfig) :
+HLTVariableHelper<T>::HLTVariableHelper(const edm::ParameterSet & iConfig) : 
 probesToken_(consumes<TCollection>(iConfig.getParameter<edm::InputTag>("probes"))),
+  rhoToken_(consumes<double>(iConfig.getParameter<edm::InputTag>("rhoInputTag"))),
   hltCandToken_(consumes<std::vector<reco::RecoEcalCandidate> >(iConfig.getParameter<edm::InputTag>("hltCandidateCollection"))),
   mapNames_(iConfig.getParameter<std::vector<std::string> >("mapOutputNames")),
   inputTags_(iConfig.getParameter<std::vector<edm::InputTag> >("mapInputTags")) {
@@ -50,6 +52,8 @@ probesToken_(consumes<TCollection>(iConfig.getParameter<edm::InputTag>("probes")
     abort();
   }
 
+  hardCodedNames_.push_back("hltrho");
+  hardCodedNames_.push_back("hlte");
   hardCodedNames_.push_back("hltet");
   hardCodedNames_.push_back("hlteta");
   hardCodedNames_.push_back("hltphi");
@@ -78,15 +82,24 @@ void HLTVariableHelper<T>::produce(edm::Event & iEvent, const edm::EventSetup & 
   std::vector<edm::Handle<reco::RecoEcalCandidateIsolationMap> > mapsH(mapsToken_.size());
   std::vector<const reco::RecoEcalCandidateIsolationMap*> maps(inputTags_.size(), 0);
 
+  edm::Handle<double> rhoH;
+  iEvent.getByToken(rhoToken_, rhoH);
+  double rho;
+
+  if (!rhoH.failedToGet())
+    rho = *(rhoH.product());
+  else
+    rho = 999999.;
+
   // hardcoded valuemaps
   std::vector<std::vector<float> > hardCodedValues;
-  for (unsigned int i=0; i<3; i++) 
-    hardCodedValues.push_back(std::vector<float>(probes->size(), 9999.));
+  for (unsigned int i=0; i<hardCodedNames_.size(); i++) 
+    hardCodedValues.push_back(std::vector<float>(probes->size(), 999999.));
 
   // prepare vector for output
   std::vector<std::vector<float> > values;
   for (unsigned int i=0; i<inputTags_.size(); i++) 
-    values.push_back(std::vector<float>(probes->size(), 9999.));
+    values.push_back(std::vector<float>(probes->size(), 999999.));
 
   iEvent.getByToken(hltCandToken_, cH);
   if (!cH.failedToGet()) {
@@ -98,28 +111,32 @@ void HLTVariableHelper<T>::produce(edm::Event & iEvent, const edm::EventSetup & 
 
     for (size_t p=0; p<probes->size(); p++) {
       const TRef ref(probes, p);
+      float dRmin = 0.3;
+
       for(size_t nc=0; nc<cH->size(); nc++) {
 	reco::RecoEcalCandidateRef cRef(cH, nc);      
 	float dR = deltaR(cRef->p4(), ref->p4());
-	// fixme to keep the closest
-	if (dR<0.2) {
-	  //hardCodedValues[0][p] = cRef->superCluster()->energy()*cRef->superCluster()->position().Theta(); // et
-	  hardCodedValues[0][p] = cRef->et();//superCluster()->energy()*cRef->superCluster()->position().Theta(); // et
-	  hardCodedValues[1][p] = cRef->eta(); // eta
-	  hardCodedValues[2][p] = cRef->phi(); // phi
+
+	if (dR < dRmin) {
+          dRmin = dR;
+
+	  hardCodedValues[0][p] = rho;
+	  hardCodedValues[1][p] = cRef->energy();
+	  hardCodedValues[2][p] = cRef->et();//superCluster()->energy()*cRef->superCluster()->position().Theta(); // et
+	  hardCodedValues[3][p] = cRef->eta(); // eta
+	  hardCodedValues[4][p] = cRef->phi(); // phi
 	  
 	  for (unsigned int i=0; i<inputTags_.size(); i++) {
 	  if (maps[i] != 0)
 	    values[i][p] = (*maps[i])[cRef];
 	  }
-	  break;
 	}
       }
     }
   }
 
   // Save hardcoded
-  for (unsigned int i=0; i<3; i++) {
+  for (unsigned int i=0; i<hardCodedNames_.size(); i++) {
     // convert into ValueMap and store
     std::auto_ptr<edm::ValueMap<float> > aMap(new edm::ValueMap<float>());
     edm::ValueMap<float>::Filler aFiller(*aMap);
