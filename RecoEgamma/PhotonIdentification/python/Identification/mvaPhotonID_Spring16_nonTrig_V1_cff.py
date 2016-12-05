@@ -52,8 +52,8 @@ MVA_WP90 = PhoMVA_2Categories_WP(
     idName = idName,
     mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
     mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
-    cutCategory0 =  0.08,  # EB new val : sig eff = 90% , bkg eff = ?
-    cutCategory1 = -0.11   # EE new val : sig eff = 90% , bkg eff = ?
+    cutCategory0 =  0.20,  # EB new val : sig eff = 90% , bkg eff = ?
+    cutCategory1 =  0.20   # EE new val : sig eff = 90% , bkg eff = ?
     )
 
 # The working point for this MVA that is expected to have about 90% signal
@@ -64,8 +64,8 @@ MVA_WP80 = PhoMVA_2Categories_WP(
     idName = idName,
     mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
     mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
-    cutCategory0 = 0.65,  # EB new val : sig eff = 80% , bkg eff = ?
-    cutCategory1 = 0.30   # EE new val : sig eff = 80% , bkg eff = ?
+    cutCategory0 = 0.68,  # EB new val : sig eff = 80% , bkg eff = ?
+    cutCategory1 = 0.60   # EE new val : sig eff = 80% , bkg eff = ?
     )
 
 #
