@@ -56,7 +56,8 @@ def setModules(process, options):
     process.hltFilter = hltHighLevel.clone()
     process.hltFilter.throw = cms.bool(True)
     process.hltFilter.HLTPaths = options['TnPPATHS']
-    
+    process.hltFilter.TriggerResultsTag = cms.InputTag("TriggerResults","",options['HLTProcessName'])    
+
     from PhysicsTools.TagAndProbe.pileupConfiguration_cfi import pileupProducer
     process.pileupReweightingProducer = pileupProducer.clone()
     
@@ -209,11 +210,17 @@ def setSequences(process, options):
         )
 
     process.ele_sequence = cms.Sequence(
-        process.goodElectronsPROBEHLTsafe        +
-        process.goodElectronsPROBECutBasedVeto   +
-        process.goodElectronsPROBECutBasedLoose  +
-        process.goodElectronsPROBECutBasedMedium +
-        process.goodElectronsPROBECutBasedTight  +
+        process.goodElectronsPROBEHLTsafe           +
+        process.goodElectronsPROBECutBasedVeto      +
+        process.goodElectronsPROBECutBasedLoose     +
+        process.goodElectronsPROBECutBasedMedium    +
+        process.goodElectronsPROBECutBasedTight     +
+        process.goodElectronsPROBECutBasedVeto80X   +
+        process.goodElectronsPROBECutBasedLoose80X  +
+        process.goodElectronsPROBECutBasedMedium80X +
+        process.goodElectronsPROBECutBasedTight80X  +
+        process.goodElectronsPROBEMVA80Xwp90        +
+        process.goodElectronsPROBEMVA80Xwp80        +
         process.goodElectronsProbeHLT
         )
 
@@ -223,15 +230,17 @@ def setSequences(process, options):
         )
 
     process.pho_sequence = cms.Sequence(
-        process.goodPhotons                    +
-        process.egmPhotonIDSequence            +
-        process.goodPhotonsPROBECutBasedLoose  +
-        process.goodPhotonsPROBECutBasedMedium +
-        process.goodPhotonsPROBECutBasedTight  +
-        process.goodPhotonsPROBEMVA            +
+        process.goodPhotons                       +
+        process.egmPhotonIDSequence               +
+        process.goodPhotonsPROBECutBasedLoose     +
+        process.goodPhotonsPROBECutBasedMedium    +
+        process.goodPhotonsPROBECutBasedTight     +
+        process.goodPhotonsPROBEMVA               +
         process.goodPhotonsPROBECutBasedLoose80X  +
         process.goodPhotonsPROBECutBasedMedium80X +
         process.goodPhotonsPROBECutBasedTight80X  +
+        process.goodPhotonsPROBEMVA80Xwp90       +
+        process.goodPhotonsPROBEMVA80Xwp80       +
         process.goodPhotonsProbeHLT
         )
 
