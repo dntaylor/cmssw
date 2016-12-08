@@ -114,25 +114,22 @@ options['UseCalibEn']           = varOptions.useCalibEn
 if (varOptions.isMC):
     options['isMC']                = cms.bool(True)
     options['OUTPUT_FILE_NAME']    = "TnPTree_mc.root"
-    options['TnPPATHS']            = cms.vstring("HLT*")
-    options['TnPHLTTagFilters']    = cms.vstring()
-    options['TnPHLTProbeFilters']  = cms.vstring()
-    options['HLTFILTERTOMEASURE']  = cms.vstring("")
+#    options['TnPPATHS']            = cms.vstring("HLT*")
+#    options['TnPHLTTagFilters']    = cms.vstring()
+#    options['TnPHLTProbeFilters']  = cms.vstring()
+#    options['HLTFILTERTOMEASURE']  = cms.vstring("")
     options['TnPPATHS']            = cms.vstring("HLT_Ele27_eta2p1_WPTight_Gsf_v*")
     options['TnPHLTTagFilters']    = cms.vstring("hltEle27erWPTightGsfTrackIsoFilter")
     options['TnPHLTProbeFilters']  = cms.vstring()
     options['HLTFILTERTOMEASURE']  = cms.vstring("hltEle27erWPTightGsfTrackIsoFilter")   
     options['GLOBALTAG']           = 'auto:run2_mc'
-#    options['GLOBALTAG']           = '80X_mcRun2_asymptotic_2016_miniAODv2_v1'
 else:
     options['OUTPUT_FILE_NAME']    = "TnPTree_data.root"
     options['TnPPATHS']            = cms.vstring("HLT_Ele27_eta2p1_WPTight_Gsf_v*")
     options['TnPHLTTagFilters']    = cms.vstring("hltEle27erWPTightGsfTrackIsoFilter")
     options['TnPHLTProbeFilters']  = cms.vstring()
     options['HLTFILTERTOMEASURE']  = cms.vstring("hltEle27erWPTightGsfTrackIsoFilter")
-#    options['GLOBALTAG']           = '80X_dataRun2_Prompt_ICHEP16JEC_v0'#'auto:run2_data'
     options['GLOBALTAG']           = 'auto:run2_data'
-#    options['GLOBALTAG']           = '80X_dataRun2_2016SeptRepro_v4'
 
 if varOptions.GT != "auto" :
     options['GLOBALTAG'] = varOptions.GT
@@ -142,9 +139,9 @@ if varOptions.GT != "auto" :
 ## Inputs for test
 ###################################################################
 filesMC =  cms.untracked.vstring(
-    '/store/mc/RunIISpring16MiniAODv1/DYToEE_NNPDF30_13TeV-powheg-pythia8/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/00271303-C80D-E611-A98C-0002C94D552A.root',
-    '/store/mc/RunIISpring16MiniAODv1/DYToEE_NNPDF30_13TeV-powheg-pythia8/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/026FA9AF-DB0D-E611-9CFB-A0000420FE80.root',
-    '/store/mc/RunIISpring16MiniAODv1/DYToEE_NNPDF30_13TeV-powheg-pythia8/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02FEA941-F10D-E611-BB9E-A0000420FE80.root',
+    '/store/mc/RunIISpring16MiniAODv2/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14_ext1-v1/20000/00071E92-6F55-E611-B68C-0025905A6066.root',
+    '/store/mc/RunIISpring16MiniAODv2/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14_ext1-v1/20000/00384BBA-D455-E611-B32C-0CC47A4D7600.root',
+       '/store/mc/RunIISpring16MiniAODv2/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14_ext1-v1/20000/00684732-3155-E611-B794-0CC47A4D7640.root',
     )
 
 filesData =  cms.untracked.vstring( 
@@ -296,9 +293,9 @@ process.GsfElectronToTrigger = cms.EDAnalyzer("TagProbeFitTreeProducer",
                                               tagProbePairs = cms.InputTag("tagTightHLT"),
                                               arbitration   = cms.string("HighestPt"),
                                               flags         = cms.PSet(passingHLT     = cms.InputTag("goodElectronsMeasureHLT"),
-                                                                       passingLoose   = cms.InputTag("goodElectronsPROBECutBasedLoose"),
+                                                                       passingLoose   = cms.InputTag("goodElectronsPROBECutBasedLoose" ),
                                                                        passingMedium  = cms.InputTag("goodElectronsPROBECutBasedMedium"),
-                                                                       passingTight   = cms.InputTag("goodElectronsPROBECutBasedTight"),
+                                                                       passingTight   = cms.InputTag("goodElectronsPROBECutBasedTight" ),
                                                                        passingHLTsafe = cms.InputTag("goodElectronsPROBEHLTsafe"),
                                                                        ),                                               
                                               allProbes     = cms.InputTag("goodElectronsProbeMeasureHLT"),
@@ -317,10 +314,16 @@ process.GsfElectronToEleID = cms.EDAnalyzer("TagProbeFitTreeProducer",
                                             tnpVars.mcTruthCommonStuff, tnpVars.CommonStuffForGsfElectronProbe,
                                             tagProbePairs = cms.InputTag("tagTightEleID"),
                                             arbitration   = cms.string("HighestPt"),
-                                            flags         = cms.PSet(passingVeto    = cms.InputTag("goodElectronsPROBECutBasedVeto"),
-                                                                     passingLoose   = cms.InputTag("goodElectronsPROBECutBasedLoose"),
+                                            flags         = cms.PSet(passingVeto    = cms.InputTag("goodElectronsPROBECutBasedVeto"  ),
+                                                                     passingLoose   = cms.InputTag("goodElectronsPROBECutBasedLoose" ),
                                                                      passingMedium  = cms.InputTag("goodElectronsPROBECutBasedMedium"),
-                                                                     passingTight   = cms.InputTag("goodElectronsPROBECutBasedTight"),
+                                                                     passingTight   = cms.InputTag("goodElectronsPROBECutBasedTight" ),
+                                                                     passingVeto80X    = cms.InputTag("goodElectronsPROBECutBasedVeto80X"  ),
+                                                                     passingLoose80X   = cms.InputTag("goodElectronsPROBECutBasedLoose80X" ),
+                                                                     passingMedium80X  = cms.InputTag("goodElectronsPROBECutBasedMedium80X"),
+                                                                     passingTight80X   = cms.InputTag("goodElectronsPROBECutBasedTight80X" ),
+                                                                     passingMVA80Xwp90 = cms.InputTag("goodElectronsPROBEMVA80Xwp90" ),
+                                                                     passingMVA80Xwp80 = cms.InputTag("goodElectronsPROBEMVA80Xwp80" ),
                                                                      passingHLTsafe = cms.InputTag("goodElectronsPROBEHLTsafe"),
                                                                      ),                                               
                                             allProbes     = cms.InputTag("goodElectronsProbeHLT"),
@@ -336,7 +339,9 @@ process.GsfElectronToPhoID = cms.EDAnalyzer("TagProbeFitTreeProducer",
                                                                      passingLoose80X  = cms.InputTag("goodPhotonsPROBECutBasedLoose80X"),
                                                                      passingMedium80X = cms.InputTag("goodPhotonsPROBECutBasedMedium80X"),
                                                                      passingTight80X  = cms.InputTag("goodPhotonsPROBECutBasedTight80X"),
-                                                                     passingMVA    = cms.InputTag("goodPhotonsPROBEMVA"),
+                                                                     passingMVA           = cms.InputTag("goodPhotonsPROBEMVA"),
+                                                                     passingMVA80Xwp90    = cms.InputTag("goodPhotonsPROBEMVA80Xwp90"),
+                                                                     passingMVA80Xwp80    = cms.InputTag("goodPhotonsPROBEMVA80Xwp80"),
                                                                      ),                                                                                           
                                             allProbes     = cms.InputTag("goodPhotonsProbeHLT"),
                                             )

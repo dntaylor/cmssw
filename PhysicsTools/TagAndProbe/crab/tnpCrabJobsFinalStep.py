@@ -4,6 +4,7 @@ from CRABClient.ClientExceptions import ClientException
 from httplib import HTTPException
 
 
+import argparse
 import pickle
 import sys,os,subprocess
 import string
@@ -19,7 +20,44 @@ import string
 #                      only work on eos
 #                      campaign is named after crab project area (to be improved)
 
-dirToCheck = sys.argv[1]
+
+
+
+parser = argparse.ArgumentParser(description='tnp check crab jobs')
+parser.add_argument('-s', action='store_false', help = 'deactivate crab status')
+parser.add_argument('-r', action='store_false', help = 'deactivate crab report')
+parser.add_argument('--hadd'   , action = 'store_true' , help = 'create output tree')
+parser.add_argument('--addAll' , action = 'store_true' , help = 'hadd file in any status (default false: only finished)')
+parser.add_argument('crabDir'  , default = None        , help = 'crabDir')
+parser.add_argument('--dry_run', action='store_true'   , help = 'do not hadd, just test')
+
+args = parser.parse_args()
+print args
+if args.crabDir is None :
+    print 'Need to specify a crabDirectory as argument'
+    sys.exit(0)
+
+
+def convert_bytes(num):
+    """
+    this function will convert bytes to MB.... GB... etc
+    """
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+        if num < 1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
+
+
+def file_size_kb(file_path):
+    """
+    this function will return the file size in KB
+    """
+    if os.path.isfile(file_path):
+        file_info = os.stat(file_path)
+        return file_info.st_size/1024.0
+
+
+dirToCheck = args.crabDir + "/"
 
 inputTnPCrab = pickle.load(open(dirToCheck+'.requestcache','rb'))
 
@@ -58,48 +96,101 @@ for f in filelistTmp:
 ###################################################################
 ##############  Check STATUS
 ###################################################################
-checkStatus = True
 statusOut   = None
-if checkStatus:
+
+if args.s:
     try:
         statusOut = crabCommand('status', dir = dirToCheck )
     except:
         print "Crab command status failed ... "
+        sys.exit(1)
 
+jobStatus = {}
 if statusOut != None:
-    filelistOnlyFinished = []
     for job in statusOut['jobs']:
         jobId = int(job)
         state = statusOut['jobs'][job]['State']
-        print ' job %d : status: %s ' % (jobId,state) 
-        if state == 'finished' :
-            print '   -> adding  file jobID:  ', jobId
-            filelistOnlyFinished.append( filelist[jobId] )
-#        if state == 'transferring' and jobId in filelist.keys() : 
-#            filelistOnlyFinished.append( filelist[jobId] )
-#            print 'WARNING adding transferring file... you should remove them unless you have a good reason to.'
+        jobStatus[jobId] = state
+    
+filelistsDone    = { 'running' : [] , 'finished': [] , 'transferring': [], 'other' : [], 'failed' : [] }
+filelistsMissing = { 'running' : [] , 'finished': [] , 'transferring': [], 'other' : [], 'failed' : [] }
 
+for jobId in filelist.keys():
+    if jobId in jobStatus.keys():
+        ## ensure file is not in transfer (size (kB) > 0.1 )
+        if file_size_kb(filelist[jobId]) < 0.1 : continue
+        if   jobStatus[jobId] == 'finished':
+            filelistsDone['finished'].append( filelist[jobId] )
+        elif jobStatus[jobId] == 'transferring':
+            filelistsDone['transferring'].append( filelist[jobId] )
+        elif jobStatus[jobId] == 'running'     :
+            filelistsDone['running'].append( filelist[jobId] )
+        elif jobStatus[jobId] == 'failed'     :
+            filelistsDone['failed'].append( filelist[jobId] )
+        else:
+            filelistsDone['other'].append( filelist[jobId] )
+            print '==> Job: %d in state (not finished): %s but file is already transferred' % (jobId,jobStatus[jobId])
+    else:
+        print '==> SEVERE WARNING: jobId %d does not exist !' % jobId
+
+for jobId in jobStatus.keys():
+    if not jobId in filelist.keys():
+        if   jobStatus[jobId] == 'finished':
+            filelistsMissing['finished'].append(jobId)
+        elif jobStatus[jobId] == 'transferring':
+            filelistsMissing['transferring'].append(jobId)
+        elif jobStatus[jobId] == 'running':
+            filelistsMissing['running'].append(jobId)
+        elif jobStatus[jobId] == 'failed':
+            filelistsMissing['failed'].append(jobId)
+        else:
+            filelistsMissing['other'].append(jobId)
+
+nOnDisk  = len( filelistsDone['finished']) + len(filelistsDone['transferring'] ) + len(filelistsDone['running']) + len(filelistsDone['other']) + len(filelistsDone['failed'])
+nMissing = len( filelistsMissing['finished']) + len(filelistsMissing['transferring'] ) + len(filelistsMissing['running']) + len(filelistsMissing['other']) + len(filelistsMissing['failed'])
+
+print '============== crab summary for job: %s ===============' % config.General.requestName
+print 'On disk : %4d/%4d (%2.1f%%)' % (nOnDisk,len(jobStatus.keys() ),float(nOnDisk)/len(jobStatus.keys() )*100)
+if len(filelistsDone['finished']) > 0    : print ' - crab state finished: ', len(filelistsDone['finished'])
+if len(filelistsDone['transferring']) >0 : print ' - crab state transfer: ', len(filelistsDone['transferring'])
+if len(filelistsDone['running'])     >0  : print ' - crab state running : ', len(filelistsDone['running'])
+if len(filelistsDone['failed'])      >0  : print ' - crab state failed  : ', len(filelistsDone['failed'])
+if len(filelistsDone['other']) > 0       : print ' - crab state ??      : ', len(filelistsDone['other'])
+
+print 'Missing : %4d/%4d (%2.1f%%)' % (nMissing,len(jobStatus.keys() ),float(nMissing)/len(jobStatus.keys() )*100)
+if len(filelistsMissing['finished']) > 0    : print ' - crab state finished: ', len(filelistsMissing['finished'])
+if len(filelistsMissing['transferring']) >0 : print ' - crab state transfer: ', len(filelistsMissing['transferring'])
+if len(filelistsMissing['running'])     >0  : print ' - crab state running : ', len(filelistsMissing['running'])
+if len(filelistsMissing['failed'])      >0  : print ' - crab state failed  : ', len(filelistsMissing['failed'])
+if len(filelistsMissing['other']) > 0       : print ' - crab state ??      : ', len(filelistsMissing['other'])
+
+if len(filelistsMissing['finished']) > 0: print ' Need to resubmit following jobs:'
+for jobId in filelistsMissing['finished']:
+    print jobId
+    
 
 ###################################################################
 ##############  Check REPORT
 ###################################################################
-checkReport = True
-reportOut   = None
-nEvtsRead = 0
+reportOut = None
+nEvtsRead = -1
 lumiProccessedFile = None
-if checkReport:
+if args.r:
     try:
         reportOut = crabCommand('report', dir = dirToCheck )
+#        print reportOut
+        nEvtsRead          = reportOut['numEventsRead']
+        lumiProccessedFile = '%s/%s/%s' % (os.getcwd(),dirToCheck,'results/processedLumis.json')
     except:
         print "Crab command report failed ... "
-    nEvtsRead          = reportOut['numEventsRead']
-    lumiProccessedFile = '%s/%s/%s' % (os.getcwd(),dirToCheck,'results/processedLumis.json')
+        
     
-#sys.exit(0)
 
 ###################################################################
 ##############  hAdd
 ###################################################################
+if not args.hadd: sys.exit(0)
+
 outDir  = dirToCheck 
 outFile = '%s/TnPTree_%s_%s.root' % (outDir,dasDataset,config.General.requestName)
 print 'hadd will be saved to %s ' % outFile
@@ -114,8 +205,20 @@ dataset['lumiProcessedFile' ]  = lumiProccessedFile
 dataset['lumi' ]    = -1
 print dataset
 
+filelistTohAdd  = filelistsDone['finished']
+if args.addAll:
+    filelistTohAdd += filelistsDone['transferring']
+    filelistTohAdd += filelistsDone['running']
+    filelistTohAdd += filelistsDone['failed']
+    filelistTohAdd += filelistsDone['other']
+
+print 'Hadding %d files ' % len(filelistTohAdd)
+
+if args.dry_run:
+    sys.exit(0)
+
 haddCommand = ['hadd','-f',outFile]
-haddCommand += filelistOnlyFinished
+haddCommand += filelistTohAdd
 
 subprocess.call(haddCommand)
 subprocess.call(['mv',outFile,'eos/cms/%s'%config.Data.outLFNDirBase])
