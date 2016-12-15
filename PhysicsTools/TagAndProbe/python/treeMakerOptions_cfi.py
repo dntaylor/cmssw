@@ -162,29 +162,32 @@ def setModules(process, options):
 ###################################################################
 ## TnP PAIRS
 ###################################################################
-    
+    masscut = cms.string("60<mass<120")
+    if (options['isMC']) :
+        ## keep larger mass window for MC for template fitting
+        masscut = cms.string("40<mass<140")
     process.tagTightHLT   = cms.EDProducer("CandViewShallowCloneCombiner",
                                            decay = cms.string("goodElectronsTagHLT@+ goodElectronsProbeMeasureHLT@-"), 
                                            checkCharge = cms.bool(True),
-                                           cut = cms.string("60<mass<120"),
+                                           cut = masscut,
                                            )
     
     process.tagTightSC    = cms.EDProducer("CandViewShallowCloneCombiner",
                                            decay = cms.string("goodElectronsTagHLT goodSuperClustersHLT"), 
                                            checkCharge = cms.bool(False),
-                                           cut = cms.string("60<mass<120"),
+                                           cut = masscut,
                                            )
     
     process.tagTightEleID = cms.EDProducer("CandViewShallowCloneCombiner",
                                            decay = cms.string("goodElectronsTagHLT goodElectronsProbeHLT"), 
                                            checkCharge = cms.bool(False),
-                                           cut = cms.string("60<mass<120"),
+                                           cut = masscut,
                                            )
     
     process.tagTightPhoID = cms.EDProducer("CandViewShallowCloneCombiner",
                                            decay = cms.string("goodElectronsTagHLT goodPhotonsProbeHLT"), 
                                            checkCharge = cms.bool(False),
-                                           cut = cms.string("60<mass<120"),
+                                           cut = masscut,
                                            )
     
 def setSequences(process, options):
