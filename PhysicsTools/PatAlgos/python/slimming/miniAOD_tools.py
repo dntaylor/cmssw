@@ -250,6 +250,10 @@ def miniAOD_customizeCommon(process):
     from RecoTauTag.Configuration.boostedHPSPFTaus_cfi import addBoostedTaus
     addBoostedTaus(process)
     #---------------------------------------------------------------------------
+    #Adding muon cleaned taus
+    from RecoTauTag.Configuration.muonCleanedHPSPFTaus_cfi import addMuonCleanedTaus
+    addMuonCleanedTaus(process)
+    #---------------------------------------------------------------------------
 
     # Adding puppi jets
     process.load('RecoJets.JetProducers.ak4PFJetsPuppi_cfi')
