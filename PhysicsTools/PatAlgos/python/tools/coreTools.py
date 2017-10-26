@@ -11,7 +11,7 @@ class RunOnData(ConfigToolBase):
     _defaultParameters=dicttypes.SortedKeysDict()
     def __init__(self):
         ConfigToolBase.__init__(self)
-        self.addParameter(self._defaultParameters,'names',['All'], "collection name; supported are 'Photons', 'Electrons','Muons', 'Taus', 'TausBoosted', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'", allowedValues=['Photons', 'Electrons','Muons', 'Taus', 'TausBoosted', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'])
+        self.addParameter(self._defaultParameters,'names',['All'], "collection name; supported are 'Photons', 'Electrons','Muons', 'Taus', 'TausBoosted', 'TausMuonCleaned', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'", allowedValues=['Photons', 'Electrons','Muons', 'Taus', 'TausBoosted','TausMuonCleaned', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'])
         self.addParameter(self._defaultParameters,'postfix',"", "postfix of default sequence")
         self.addParameter(self._defaultParameters,'outputModules',['out'], "names of all output modules specified to be adapted (default is ['out'])")
         self._parameters=copy.deepcopy(self._defaultParameters)
@@ -68,7 +68,7 @@ class RemoveMCMatching(ConfigToolBase):
     _defaultParameters=dicttypes.SortedKeysDict()
     def __init__(self):
         ConfigToolBase.__init__(self)
-        self.addParameter(self._defaultParameters,'names',['All'], "collection name; supported are 'Photons', 'Electrons','Muons', 'Taus', 'TausBoosted', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'", allowedValues=['Photons', 'Electrons','Muons', 'Taus', 'TausBoosted', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'])
+        self.addParameter(self._defaultParameters,'names',['All'], "collection name; supported are 'Photons', 'Electrons','Muons', 'Taus', 'TausBoosted', 'TausMuonCleaned', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'", allowedValues=['Photons', 'Electrons','Muons', 'Taus', 'TausBoosted','TausMuonCleaned', 'Jets', 'METs', 'All', 'PFAll', 'PFElectrons','PFTaus','PFMuons'])
         self.addParameter(self._defaultParameters,'postfix',"", "postfix of default sequence")
         self.addParameter(self._defaultParameters,'outputModules',['out'], "names of all output modules specified to be adapted (default is ['out'])")
         self._parameters=copy.deepcopy(self._defaultParameters)
@@ -128,6 +128,17 @@ class RemoveMCMatching(ConfigToolBase):
                     tauProducer.genJetMatch      = ''
                 else :
                     print "...skipped since taus boosted %s" %postfix, "are not part of process."  
+            if( names[obj] == 'TausMuonCleaned'      or names[obj] == 'All' ):
+                print "removing MC dependencies for tausMuonCleaned"
+                _removeMCMatchingForPATObject(process, 'tauMatch', 'patTausMuonCleaned', postfix)
+                ## remove mc extra configs for taus
+                tauProducer = getattr(process,'patTausMuonCleaned'+postfix)
+                tauProducer.addGenJetMatch   = False
+                tauProducer.embedGenJetMatch = False
+                attrsToDelete += [tauProducer.genJetMatch.getModuleLabel()]
+                tauProducer.genJetMatch      = ''
+                attrsToDelete += ['tauGenJetsMuonCleaned'+postfix]
+                attrsToDelete += ['tauGenJetsSelectorAllHadronsMuonCleaned'+postfix]
             if( names[obj] == 'Jets'      or names[obj] == 'All' ):
                 print "removing MC dependencies for jets"
                 jetPostfixes = []
