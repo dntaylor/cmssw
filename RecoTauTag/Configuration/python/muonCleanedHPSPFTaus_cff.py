@@ -11,7 +11,7 @@ Sequences for reconstructing muon cleaned taus using the HPS algorithm
 from RecoJets.JetProducers.ak4PFJetsMuonCleaned_cfi import *
 
 # create task
-muonCleanedHPSPFTausTask = cms.Task(
-    recoMuonsForJetCleaning,
+muonCleanedHPSPFTausSequence = cms.Sequence(
+    recoMuonsForJetCleaning*
     ak4PFJetsMuonCleaned
 )
