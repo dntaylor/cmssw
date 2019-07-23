@@ -50,7 +50,7 @@ class PFRecoTauTagInfoProducer : public edm::global::EDProducer<> {
   double smearedPVsigmaY_;
   double smearedPVsigmaZ_;
 
-  edm::EDGetTokenT<PFCandidateCollection> PFCandidate_token;
+  edm::EDGetTokenT<edm::View<reco::PFCandidate> > PFCandidate_token;
   edm::EDGetTokenT<JetTracksAssociationCollection> PFJetTracksAssociator_token;
   edm::EDGetTokenT<VertexCollection> PV_token;
 };
@@ -64,7 +64,7 @@ PFRecoTauTagInfoProducer::PFRecoTauTagInfoProducer(const edm::ParameterSet& iCon
   smearedPVsigmaY_                    = iConfig.getParameter<double>("smearedPVsigmaY");
   smearedPVsigmaZ_                    = iConfig.getParameter<double>("smearedPVsigmaZ");	
   PFRecoTauTagInfoAlgo_.reset( new PFRecoTauTagInfoAlgorithm(iConfig) );
-  PFCandidate_token = consumes<PFCandidateCollection>(PFCandidateProducer_);
+  PFCandidate_token = consumes<edm::View<reco::PFCandidate> >(PFCandidateProducer_);
   PFJetTracksAssociator_token = consumes<JetTracksAssociationCollection>(PFJetTracksAssociatorProducer_);
   PV_token = consumes<VertexCollection>(PVProducer_);
   produces<PFTauTagInfoCollection>();      
@@ -76,7 +76,7 @@ void PFRecoTauTagInfoProducer::produce(edm::StreamID, edm::Event& iEvent, const 
   edm::Handle<JetTracksAssociationCollection> thePFJetTracksAssociatorCollection;
   iEvent.getByToken(PFJetTracksAssociator_token,thePFJetTracksAssociatorCollection);
   // *** access the PFCandidateCollection in the event in order to retrieve the PFCandidateRefVector which constitutes each PFJet
-  edm::Handle<PFCandidateCollection> thePFCandidateCollection;
+  edm::Handle<edm::View<reco::PFCandidate> > thePFCandidateCollection;
   iEvent.getByToken(PFCandidate_token,thePFCandidateCollection);
   vector<CandidatePtr> thePFCandsInTheEvent;
   for(unsigned int i_PFCand=0;i_PFCand!=thePFCandidateCollection->size();i_PFCand++) { 

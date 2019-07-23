@@ -52,6 +52,10 @@
   <class name="edm::PtrVector<reco::PFCandidate> "/>
   <class name="edm::Wrapper<edm::PtrVector<reco::PFCandidate> >"/>
 
+  <class name="edm::RefVector<std::vector<reco::PFCandidate>,reco::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::PFCandidate>,reco::PFCandidate> >"/>
+  <class name="edm::Wrapper<edm::RefVector<std::vector<reco::PFCandidate>,reco::PFCandidate,edm::refhelper::FindUsingAdvance<std::vector<reco::PFCandidate>,reco::PFCandidate> > >"/>
+        
+
   <class name="reco::IsolatedPFCandidate"  ClassVersion="15">
    <version ClassVersion="15" checksum="3042264953"/>
    <version ClassVersion="14" checksum="207328514"/>

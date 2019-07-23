@@ -56,7 +56,7 @@ class RecoTauGenericJetRegionProducer : public edm::stream::EDProducer<>
   edm::InputTag pfCandSrc_;
   edm::InputTag pfCandAssocMapSrc_;
 
-  edm::EDGetTokenT<std::vector<CandType> > pf_token;
+  edm::EDGetTokenT<edm::View<CandType> > pf_token;
   edm::EDGetTokenT<reco::CandidateView> Jets_token;
   edm::EDGetTokenT<JetToCandidateAssociation> pfCandAssocMap_token;
 
@@ -75,7 +75,7 @@ RecoTauGenericJetRegionProducer<JetType, CandType>::RecoTauGenericJetRegionProdu
   pfCandSrc_ = cfg.getParameter<edm::InputTag>("pfCandSrc");
   pfCandAssocMapSrc_ = cfg.getParameter<edm::InputTag>("pfCandAssocMapSrc");
 
-  pf_token = consumes<std::vector<CandType> >(pfCandSrc_); 
+  pf_token = consumes<edm::View<CandType> >(pfCandSrc_); 
   Jets_token = consumes<reco::CandidateView>(inputJets_);
   pfCandAssocMap_token =  consumes<JetToCandidateAssociation>(pfCandAssocMapSrc_);
   
@@ -100,7 +100,7 @@ void RecoTauGenericJetRegionProducer<JetType, CandType>::produce(edm::Event& evt
     std::cout << " pfCandAssocMapSrc_ = " << pfCandAssocMapSrc_ << std::endl;
   }
 
-  edm::Handle<std::vector<CandType> > pfCandsHandle;
+  edm::Handle<edm::View<CandType> > pfCandsHandle;
   evt.getByToken(pf_token, pfCandsHandle);
 
   // Build Ptrs for all the PFCandidates
@@ -128,9 +128,11 @@ void RecoTauGenericJetRegionProducer<JetType, CandType>::produce(edm::Event& evt
     for ( size_t ijet = 0; ijet < nJets; ++ijet ) {
       // Get a ref to jet
       const edm::Ref<std::vector<JetType> >& jetRef = jets[ijet];
-      const auto& pfCandsMappedToJet = (*jetToPFCandMap)[jetRef];
-      for ( const auto& pfCandMappedToJet : pfCandsMappedToJet ) {
-	fastJetToPFCandMap[ijet].emplace(pfCandMappedToJet.key());
+      if (jetToPFCandMap->numberOfAssociations(jetRef) > 0) {
+        const auto& pfCandsMappedToJet = (*jetToPFCandMap)[jetRef];
+        for ( const auto& pfCandMappedToJet : pfCandsMappedToJet ) {
+        fastJetToPFCandMap[ijet].emplace(pfCandMappedToJet.key());
+        }
       }
     }
   }
@@ -178,8 +180,9 @@ void RecoTauGenericJetRegionProducer<JetType, CandType>::produce(edm::Event& evt
       if ( jetToPFCandMap.isValid() ) {
 	auto temp = jetToPFCandMap->find(jetRef);
 	if( temp == jetToPFCandMap->end() ) {
-	  edm::LogWarning("WeirdCandidateMap") << "Candidate map for jet " << jetRef.key() << " is empty!";
-	  continue;
+	  //edm::LogWarning("WeirdCandidateMap") << "Candidate map for jet " << jetRef.key() << " is empty!";
+	  //continue;
+      isMappedToJet = true;
 	}
 	isMappedToJet = fastJetToPFCandMap[ijet].count(pfCand.key());
       } else {
