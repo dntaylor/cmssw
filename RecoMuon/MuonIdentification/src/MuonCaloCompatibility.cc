@@ -133,8 +133,6 @@ void MuonCaloCompatibility::configure(const edm::ParameterSet& iConfig)
    psy = -1;
    psz = -1;
 
-   muon_compatibility = -1;
-
    use_corrected_hcal = true;
    use_em_special = true;
    isConfigured_ = true;
@@ -175,7 +173,7 @@ double MuonCaloCompatibility::evaluate( const reco::Muon& amuon ) {
   psy = 1.;
   psz = 1.;
 
-  muon_compatibility = -1.;
+  double muon_compatibility = -1.;
 
   pion_template_em   = nullptr;
   muon_template_em   = nullptr;

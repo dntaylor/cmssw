@@ -39,6 +39,7 @@
 <use   name="DataFormats/CSCRecHit"/>
 <use   name="RecoLocalCalo/HcalRecAlgos"/>
 <use   name="PhysicsTools/SelectorUtils"/>
+<use   name="PhysicsTools/TensorFlow"/>
 <export>
   <lib   name="1"/>
 </export>

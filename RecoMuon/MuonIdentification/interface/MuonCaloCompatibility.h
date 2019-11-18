@@ -16,21 +16,23 @@
 //
 //
 
+#include "MuonCaloCompatibilityBase.h"
 #include "TH2.h"
 #include "TH2D.h"
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "boost/shared_ptr.hpp"
 #include <string>
 
-class MuonCaloCompatibility {
+class MuonCaloCompatibility : public MuonCaloCompatibilityBase {
  public:
-   MuonCaloCompatibility():isConfigured_(false){}
-   void configure(const edm::ParameterSet&);
-   double evaluate( const reco::Muon& );
+   MuonCaloCompatibility()
+    : MuonCaloCompatibilityBase()
+    {}
+   void configure(const edm::ParameterSet&) override;
+   double evaluate( const reco::Muon& ) override;
+   ~MuonCaloCompatibility() override {};
+
  private:
    bool accessing_overflow( const TH2D& histo, double x, double y );
-   bool isConfigured_;
    
    // used input templates for given eta
    std::shared_ptr<TH2D> pion_template_em ;
@@ -71,8 +73,6 @@ class MuonCaloCompatibility {
    double  psx;
    double  psy;
    double  psz;
-
-   double  muon_compatibility;
 
    bool use_corrected_hcal;
    bool use_em_special;

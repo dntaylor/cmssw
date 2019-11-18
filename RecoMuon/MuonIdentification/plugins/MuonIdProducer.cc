@@ -33,7 +33,8 @@
 
 #include "RecoMuon/MuonIdentification/interface/MuonKinkFinder.h"
 
-MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig)
+MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig, const DeepMuonCache* cache)
+  : cache_(cache)
 {
   
   LogTrace("MuonIdentification") << "RecoMuon/MuonIdProducer :: Constructor called";
@@ -71,6 +72,7 @@ MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig)
    ptThresholdToFillCandidateP4WithGlobalFit_    = iConfig.getParameter<double>("ptThresholdToFillCandidateP4WithGlobalFit");
    sigmaThresholdToFillCandidateP4WithGlobalFit_ = iConfig.getParameter<double>("sigmaThresholdToFillCandidateP4WithGlobalFit");
    caloCut_ = iConfig.getParameter<double>("minCaloCompatibility"); //CaloMuons
+   caloMuonLabel_ = iConfig.getParameter<std::string>("caloMuonLabel"); // training to use
    arbClean_ = iConfig.getParameter<bool>("runArbitrationCleaner"); // muon mesh
 
    // Load TrackDetectorAssociator parameters
@@ -93,6 +95,16 @@ MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig)
       // Load MuonCaloCompatibility parameters
       const auto caloParams = iConfig.getParameter<edm::ParameterSet>("MuonCaloCompatibility");
       muonCaloCompatibility_.configure( caloParams );
+
+      // Load DeepMuonCaloCompatibility 
+      auto deepCfg = iConfig.getParameter<edm::ParameterSet>("DeepCaloMuonConfiguration");
+      auto graphDefinitions = deepCfg.getParameter<std::vector<edm::ParameterSet> >("graphDefinitions");
+      for (auto graphDefinition : graphDefinitions) {
+        std::string graphName = graphDefinition.getParameter<std::string>("name");
+        deepMuonCaloCompatibilities_[graphName] = new DeepMuonCaloCompatibility(cache_);
+        deepMuonCaloCompatibilities_[graphName]->configure(graphDefinition);
+        deepCaloMuonLabels_.push_back(graphName);
+      }
    }
 
    if (fillIsolation_){
@@ -290,7 +302,14 @@ reco::CaloMuon MuonIdProducer::makeCaloMuon( const reco::Muon& muon )
 
    if (muon.isEnergyValid()) aMuon.setCalEnergy( muon.calEnergy() );
    // get calo compatibility
-   if (fillCaloCompatibility_) aMuon.setCaloCompatibility( muonCaloCompatibility_.evaluate(muon) );
+   if (fillCaloCompatibility_) {
+     auto it = deepMuonCaloCompatibilities_.find(caloMuonLabel_);
+     if (it==deepMuonCaloCompatibilities_.end()) {
+       aMuon.setCaloCompatibility( muonCaloCompatibility_.evaluate(muon) );
+     } else {
+       aMuon.setCaloCompatibility( it->second->evaluate(muon) );
+     }
+   }
    return aMuon;
 }
 
@@ -695,7 +714,14 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
        fillTrackerKink(muon);
      }
 
-     if ( fillCaloCompatibility_ ) muon.setCaloCompatibility( muonCaloCompatibility_.evaluate(muon) );
+     if ( fillCaloCompatibility_ ) {
+       auto it = deepMuonCaloCompatibilities_.find(caloMuonLabel_);
+       if (it==deepMuonCaloCompatibilities_.end()) {
+         muon.setCaloCompatibility( muonCaloCompatibility_.evaluate(muon) );
+       } else {
+         muon.setCaloCompatibility( it->second->evaluate(muon) );
+       }
+     }
 
      if ( fillIsolation_ ) {
        fillMuonIsolation(iEvent, iSetup, muon,
@@ -1338,6 +1364,23 @@ bool MuonIdProducer::checkLinks(const reco::MuonTrackLinks* links) const {
       return false;
     }
   return true;
+}
+
+std::unique_ptr<DeepMuonCache> MuonIdProducer::initializeGlobalCache(const edm::ParameterSet& cfg) {
+  std::map<std::string, std::string> graphNames;
+  if (!cfg.exists("DeepCaloMuonConfiguration")) {
+    return std::make_unique<DeepMuonCache>(graphNames, false);
+  }
+  edm::ParameterSet deepCfg = cfg.getParameter<edm::ParameterSet>("DeepCaloMuonConfiguration");
+  auto graphDefinitions = deepCfg.getParameter<std::vector<edm::ParameterSet> >("graphDefinitions");
+  bool memmapped = deepCfg.getParameter<bool>("memmapped");
+  for (auto graphDefinition : graphDefinitions) {
+    std::string graphName = graphDefinition.getParameter<std::string>("name");
+    edm::FileInPath graphPath = graphDefinition.getParameter<edm::FileInPath>("path");
+    std::string graphFullPath = graphPath.fullPath();
+    graphNames[graphName] = graphFullPath;
+  }
+  return std::make_unique<DeepMuonCache>(graphNames, memmapped);
 }
 
 void MuonIdProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {  
