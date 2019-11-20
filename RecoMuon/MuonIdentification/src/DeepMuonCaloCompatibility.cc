@@ -13,8 +13,14 @@
 // Define the inputs to the DNN
 namespace {
 
+  namespace empty {
+    constexpr int NumberOfOutputs = 1; // Defines the number of elements in the output vector
+    constexpr int MuonOutput = 0;      // Defines which element of the output vector corresponds to a muon
+  }
+
   namespace caloMuonInputs_run3_v1 {
     constexpr int NumberOfOutputs = 2;
+    constexpr int MuonOutput = 1;
     namespace InnerTrackBlockInputs {
       enum vars {
         muon_innerTrack_p = 0,
@@ -48,6 +54,7 @@ namespace {
   namespace caloMuonInputs_run3_v2 {
     constexpr int NumberOfOutputs = 2;
     constexpr int NumberOfHcalDigis = 15;
+    constexpr int MuonOutput = 1;
     namespace InnerTrackBlockInputs {
       enum vars {
         muon_innerTrack_p = 0,
@@ -59,6 +66,8 @@ namespace {
         muon_innerTrack_highPurity,
         muon_innerTrack_hitPattern_trackerLayersWithMeasurement,
         muon_innerTrack_hitPattern_pixelLayersWithMeasurement,
+        muon_isolationR03_nTracks,
+        muon_isolationR03_sumPt,
         muon_calEnergy_em,
         muon_calEnergy_emMax,
         muon_calEnergy_emS25,
@@ -93,6 +102,9 @@ namespace {
   
 void DeepMuonCaloCompatibility::configure(const edm::ParameterSet& iConfig)
 {
+
+    if (isConfigured_) return;
+
     name_ = iConfig.getParameter<std::string>("name");
     path_ = iConfig.getParameter<edm::FileInPath>("path");
     meanPath_ = iConfig.getParameter<edm::FileInPath>("means");
@@ -116,19 +128,66 @@ void DeepMuonCaloCompatibility::configure(const edm::ParameterSet& iConfig)
     }
     inputMeansFile.close();
 
-    // TODO create tensor for given name
-    innerTrackBlockTensor_ = std::make_unique<tensorflow::Tensor>(
-        tensorflow::DT_FLOAT, tensorflow::TensorShape{1, caloMuonInputs_run3_v1::InnerTrackBlockInputs::NumberOfInputs});
-    //hcalDigisTensor_ = std::make_unique<tensorflow::Tensor>(
-    //      tensorflow::DT_FLOAT,
-    //      tensorflow::TensorShape{1, caloMuonInputs_run3_v1::NumberOfHcalDigis, caloMuonInputs_run3_v1::NumberOfHcalDigis, caloMuonInputs_run3_v1::HcalDigiBlockInputs::NumberOfInputs});
+    // define graphs
+    if (name_=="caloMuonRun3v1") {
+      inputNames_.push_back("input_1");
+      inputShapes_.push_back(tensorflow::TensorShape{1, caloMuonInputs_run3_v1::InnerTrackBlockInputs::NumberOfInputs});
+      kInnerTrack_ = 0;
+      kMuonPosition_ = caloMuonInputs_run3_v1::MuonOutput;
+      outputName_ = "ID_pred/Softmax";
+    }
+    else if (name_=="caloMuonRun3v2") {
+      inputNames_.push_back("input_1");
+      inputShapes_.push_back(tensorflow::TensorShape{1, caloMuonInputs_run3_v1::InnerTrackBlockInputs::NumberOfInputs});
+      kInnerTrack_ = 0;
+      inputNames_.push_back("input_2");
+      inputShapes_.push_back(tensorflow::TensorShape{1, caloMuonInputs_run3_v2::HcalDigiBlockInputs::NumberOfInputs, caloMuonInputs_run3_v2::NumberOfHcalDigis}); 
+      kHcalDigi_ = 1;
+      kMuonPosition_ = caloMuonInputs_run3_v2::MuonOutput;
+      outputName_ = "ID_pred/Softmax";
+    }
+    else {
+      kMuonPosition_ = empty::MuonOutput;
+    }
+
+    inputTensors_.resize(inputShapes_.size());
+    for (size_t i=0; i<inputShapes_.size(); i++) {
+      inputTensors_[i] = tensorflow::NamedTensor(inputNames_[i], tensorflow::Tensor(tensorflow::DT_FLOAT, inputShapes_.at(i)));
+    }
+
+    // now validate the graph
+    auto graph = cache_->getGraph(name_);
+    for (size_t i=0; i<inputShapes_.size(); i++){
+      const auto& name = graph.node(i).name();
+      const auto& shape = graph.node(i).attr().at("shape").shape();
+      // not necessary to be in same order in the input graph
+      auto it = std::find(inputNames_.begin(), inputNames_.end(), name);
+      if (it==inputNames_.end()) {
+        throw cms::Exception("DeepCaloMuonCompatibility")
+          << "Unknown input name " << name;
+      }
+      int j = std::distance(inputNames_.begin(),it);
+      for (int d=1; d<inputShapes_.at(j).dims(); d++) { // skip first dim since it should be -1 and not 1 like we define here for evaluation
+        if (shape.dim(d).size() != inputShapes_.at(j).dim_size(d)) {
+          throw cms::Exception("DeepMuonCaloCompatibility")
+            << "Number of inputs in graph does not match those expected for " << name_ << ".\n"
+            << "Expected input " << j << " dim " << d << " = " << inputShapes_.at(j).dim_size(d) << "."
+            << " Found " << shape.dim(d).size() << ".";
+        }
+      }
+    }
+    const auto& outName = graph.node(graph.node_size() - 1).name();
+    if (outName!=outputName_) {
+      throw cms::Exception("DeepCaloMuonCompatibility")
+        << "Unexpected output name. Expected " << outputName_ << " found " << name << ".";
+    }
 
     isConfigured_ = true;
 }
 
 double DeepMuonCaloCompatibility::evaluate(const reco::Muon& muon) {
     const tensorflow::Tensor pred = getPrediction(muon);
-    double muon_compatibility = (double)pred.matrix<float>()(0,1); // TODO: currently only grab second element (must be muon)
+    double muon_compatibility = (double)pred.matrix<float>()(0,kMuonPosition_);
     return muon_compatibility;
 }
 
@@ -141,7 +200,7 @@ tensorflow::Tensor DeepMuonCaloCompatibility::getPrediction(const reco::Muon& mu
 
   if (name_=="caloMuonRun3v1") {
     getPrediction_run3_v1(muon, pred_vector);
-    prediction = tensorflow::Tensor(tensorflow::DT_FLOAT, {static_cast<int>(1), caloMuonInputs_run3_v1::NumberOfOutputs});
+    prediction = tensorflow::Tensor(tensorflow::DT_FLOAT, {1, caloMuonInputs_run3_v1::NumberOfOutputs});
     for (int k = 0; k < caloMuonInputs_run3_v1::NumberOfOutputs; ++k) {
       const float pred = pred_vector[0].flat<float>()(k); // just one prediction vector for now
       if (!(pred >= 0 && pred <= 1)) {
@@ -150,11 +209,23 @@ tensorflow::Tensor DeepMuonCaloCompatibility::getPrediction(const reco::Muon& mu
       } 
       prediction.matrix<float>()(0, k) = pred;
     }
-  } // caloMuonsRun3v1
+  } // caloMuonRun3v1
+  else if (name_=="caloMuonRun3v2") {
+    getPrediction_run3_v2(muon, pred_vector);
+    prediction = tensorflow::Tensor(tensorflow::DT_FLOAT, {1, caloMuonInputs_run3_v2::NumberOfOutputs});
+    for (int k = 0; k < caloMuonInputs_run3_v2::NumberOfOutputs; ++k) {
+      const float pred = pred_vector[0].flat<float>()(k); // just one prediction vector for now
+      if (!(pred >= 0 && pred <= 1)) {
+        throw cms::Exception("DeepMuonCaloCompatibility")
+            << "invalid prediction = " << pred << " for pred_index = " << k;
+      } 
+      prediction.matrix<float>()(0, k) = pred;
+    }
+  } // caloMuonRun3v2
   else {
-    prediction = tensorflow::Tensor(tensorflow::DT_FLOAT, {static_cast<int>(1), 2}); // for now only support [pion, muon]
-    prediction.matrix<float>()(0,0) = -1.0;
-    prediction.matrix<float>()(0,1) = -1.0;
+    prediction = tensorflow::Tensor(tensorflow::DT_FLOAT, {1, empty::NumberOfOutputs}); // for now only support [pion, muon]
+    prediction.matrix<float>().setZero();
+    prediction.matrix<float>()(0, empty::MuonOutput) = -1.0;
   }
   
   return prediction;
@@ -165,20 +236,29 @@ void DeepMuonCaloCompatibility::getPrediction_run3_v1(const reco::Muon& muon, st
   createInnerTrackBlockInputs(muon);
 
   tensorflow::run(&(cache_->getSession(name_)),
-                  {
-                    {"input_1", *innerTrackBlockTensor_},
-                    //{"input_2", *hcalDigiBlockTensor_},
-                  },
-                  {"ID_pred/Softmax"},
+                  inputTensors_,
+                  {outputName_},
+                  &pred_vector);
+
+}
+
+// run3_v2
+void DeepMuonCaloCompatibility::getPrediction_run3_v2(const reco::Muon& muon, std::vector<tensorflow::Tensor>& pred_vector) {
+  createInnerTrackBlockInputs(muon);
+  createHcalDigiBlockInputs(muon);
+
+  tensorflow::run(&(cache_->getSession(name_)),
+                  inputTensors_,
+                  {outputName_},
                   &pred_vector);
 
 }
 
 void DeepMuonCaloCompatibility::createInnerTrackBlockInputs(const reco::Muon& muon) {
-    tensorflow::Tensor& inputs = *innerTrackBlockTensor_;
+    tensorflow::Tensor& inputs = inputTensors_.at(kInnerTrack_).second;
     inputs.flat<float>().setZero();
 
-    // TODO, read means/sigmas from file rather than hard code
+    // at the moment, v1 and v2 must be the same
     namespace dnn = caloMuonInputs_run3_v1::InnerTrackBlockInputs;
     int v;
     v = dnn::muon_innerTrack_p;
@@ -228,3 +308,40 @@ void DeepMuonCaloCompatibility::createInnerTrackBlockInputs(const reco::Muon& mu
 
 }
 
+void DeepMuonCaloCompatibility::createHcalDigiBlockInputs(const reco::Muon& muon) {
+    tensorflow::Tensor& inputs = inputTensors_.at(kHcalDigi_).second;
+    inputs.flat<float>().setZero();
+
+    namespace dnn = caloMuonInputs_run3_v2::HcalDigiBlockInputs;
+    namespace dnnit = caloMuonInputs_run3_v2::InnerTrackBlockInputs;
+    // in the means list, the hcal digis are after the inner tracks
+    int nit = dnnit::NumberOfInputs;
+    int v;
+    int idh = 0;
+    // ieta and iphi are relative to the first hcal digi
+    HcalDetId did = muon.calEnergy().hcal_id;
+    // energy is normalized to the sum of all hcal digi energies
+    float total_energy = 0;
+    for (auto it: muon.calEnergy().crossedHadRecHits) {
+      total_energy += it.energy;
+    }
+    if (total_energy==0) total_energy=1;
+    for (auto it: muon.calEnergy().crossedHadRecHits) {
+      // limit the number of digis, this is large enough in run3 that we shouldnt actually reach this point even in the endcap
+      if (idh>=dnn::NumberOfInputs) break;
+      v = dnn::muon_calEnergy_crossedHadRecHits_ieta;
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.detId.ieta()-did.ieta(), means_[v+nit], sigmas_[v+nit]);
+      v = dnn::muon_calEnergy_crossedHadRecHits_iphi;
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.detId.iphi()-did.iphi(), means_[v+nit], sigmas_[v+nit]);
+      v = dnn::muon_calEnergy_crossedHadRecHits_depth;
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.detId.depth(), means_[v+nit], sigmas_[v+nit]);
+      v = dnn::muon_calEnergy_crossedHadRecHits_energy;
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.energy/total_energy, means_[v+nit], sigmas_[v+nit]);
+      v = dnn::muon_calEnergy_crossedHadRecHits_time;
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.time, means_[v+nit], sigmas_[v+nit]);
+      v = dnn::muon_calEnergy_crossedHadRecHits_chi2;
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.chi2, means_[v+nit], sigmas_[v+nit]);
+      idh++;
+    }
+
+}

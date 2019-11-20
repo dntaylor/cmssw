@@ -64,8 +64,10 @@ class DeepMuonCaloCompatibility : public MuonCaloCompatibilityBase {
     }
 
     void createInnerTrackBlockInputs(const reco::Muon&);
+    void createHcalDigiBlockInputs(const reco::Muon&);
     tensorflow::Tensor getPrediction(const reco::Muon&);
     void getPrediction_run3_v1(const reco::Muon&, std::vector<tensorflow::Tensor>&);
+    void getPrediction_run3_v2(const reco::Muon&, std::vector<tensorflow::Tensor>&);
 
   protected:
     const DeepMuonCache* cache_;
@@ -76,8 +78,15 @@ class DeepMuonCaloCompatibility : public MuonCaloCompatibilityBase {
     std::vector<std::string> names_;
     std::vector<float> means_;
     std::vector<float> sigmas_;
-    std::unique_ptr<tensorflow::Tensor> innerTrackBlockTensor_;
-    //std::array<std::unique_ptr<tensorflow::Tensor>, 2> hcalDigiBlockTensor_;
+    //std::unique_ptr<tensorflow::Tensor> innerTrackBlockTensor_;
+    //std::unique_ptr<tensorflow::Tensor> hcalDigiBlockTensor_;
+    std::vector<tensorflow::TensorShape> inputShapes_;
+    std::vector<std::string> inputNames_;
+    tensorflow::NamedTensorList inputTensors_;
+    size_t kMuonPosition_;
+    size_t kInnerTrack_;
+    size_t kHcalDigi_;
+    std::string outputName_;
 };
 
 #endif
