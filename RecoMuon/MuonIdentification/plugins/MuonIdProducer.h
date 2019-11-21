@@ -202,7 +202,6 @@ private:
 
   std::unique_ptr<MuonShowerDigiFiller> theShowerDigiFiller_;
 
-<<<<<<< HEAD
   // selections
   double minPt_;
   double minP_;

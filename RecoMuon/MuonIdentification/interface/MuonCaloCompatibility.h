@@ -54,6 +54,18 @@ class MuonCaloCompatibility : public MuonCaloCompatibilityBase {
   std::shared_ptr<TH2D> pion_had_etaEmi;
   std::shared_ptr<TH2D> pion_em_etaEmi;
 
+  std::shared_ptr<TH2D> muon_had_etaEpl;
+  std::shared_ptr<TH2D> muon_em_etaEpl;
+  std::shared_ptr<TH2D> muon_had_etaTpl;
+  std::shared_ptr<TH2D> muon_em_etaTpl;
+  std::shared_ptr<TH2D> muon_ho_etaB;
+  std::shared_ptr<TH2D> muon_had_etaB;
+  std::shared_ptr<TH2D> muon_em_etaB;
+  std::shared_ptr<TH2D> muon_had_etaTmi;
+  std::shared_ptr<TH2D> muon_em_etaTmi;
+  std::shared_ptr<TH2D> muon_had_etaEmi;
+  std::shared_ptr<TH2D> muon_em_etaEmi;
+
   double pbx;
   double pby;
   double pbz;
