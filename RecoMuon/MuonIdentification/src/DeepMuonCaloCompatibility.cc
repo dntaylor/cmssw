@@ -325,10 +325,9 @@ void DeepMuonCaloCompatibility::createHcalDigiBlockInputs(const reco::Muon& muon
     for (auto it: muon.calEnergy().crossedHadRecHits) {
       total_energy += it.energy;
     }
-    if (total_energy==0) total_energy=1;
     for (auto it: muon.calEnergy().crossedHadRecHits) {
       // limit the number of digis, this is large enough in run3 that we shouldnt actually reach this point even in the endcap
-      if (idh>=dnn::NumberOfInputs) break;
+      if (idh>=caloMuonInputs_run3_v2::NumberOfHcalDigis) continue;
       v = dnn::muon_calEnergy_crossedHadRecHits_ieta;
       inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.detId.ieta()-did.ieta(), means_[v+nit], sigmas_[v+nit]);
       v = dnn::muon_calEnergy_crossedHadRecHits_iphi;
@@ -336,7 +335,7 @@ void DeepMuonCaloCompatibility::createHcalDigiBlockInputs(const reco::Muon& muon
       v = dnn::muon_calEnergy_crossedHadRecHits_depth;
       inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.detId.depth(), means_[v+nit], sigmas_[v+nit]);
       v = dnn::muon_calEnergy_crossedHadRecHits_energy;
-      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.energy/total_energy, means_[v+nit], sigmas_[v+nit]);
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(total_energy==0 ? 0 : it.energy/total_energy, means_[v+nit], sigmas_[v+nit]);
       v = dnn::muon_calEnergy_crossedHadRecHits_time;
       inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.time<-20 ? -20 : it.time, means_[v+nit], sigmas_[v+nit]);
       v = dnn::muon_calEnergy_crossedHadRecHits_chi2;
