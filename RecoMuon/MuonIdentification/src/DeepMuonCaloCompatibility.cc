@@ -338,9 +338,9 @@ void DeepMuonCaloCompatibility::createHcalDigiBlockInputs(const reco::Muon& muon
       v = dnn::muon_calEnergy_crossedHadRecHits_energy;
       inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.energy/total_energy, means_[v+nit], sigmas_[v+nit]);
       v = dnn::muon_calEnergy_crossedHadRecHits_time;
-      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.time, means_[v+nit], sigmas_[v+nit]);
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.time<-20 ? -20 : it.time, means_[v+nit], sigmas_[v+nit]);
       v = dnn::muon_calEnergy_crossedHadRecHits_chi2;
-      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.chi2, means_[v+nit], sigmas_[v+nit]);
+      inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.chi2<-5 ? -5 : it.chi2, means_[v+nit], sigmas_[v+nit]);
       idh++;
     }
 
