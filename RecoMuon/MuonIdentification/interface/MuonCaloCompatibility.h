@@ -16,23 +16,24 @@
 //
 //
 
+#include "MuonCaloCompatibilityBase.h"
 #include "TH2.h"
 #include "TH2D.h"
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
+#include "boost/shared_ptr.hpp"
 #include <string>
 
-class MuonCaloCompatibility {
-public:
-  MuonCaloCompatibility() : isConfigured_(false) {}
-  void configure(const edm::ParameterSet&);
-  double evaluate(const reco::Muon&);
+class MuonCaloCompatibility : public MuonCaloCompatibilityBase {
+ public:
+  MuonCaloCompatibility()
+   : MuonCaloCompatibilityBase()
+   {}
+  void configure(const edm::ParameterSet&) override;
+  double evaluate( const reco::Muon& ) override;
+  ~MuonCaloCompatibility() override {};
 
-private:
-  bool accessing_overflow(const TH2D& histo, double x, double y);
-  bool isConfigured_;
-
+ private:
+  bool accessing_overflow( const TH2D& histo, double x, double y );
+  
   // used input templates for given eta
   std::shared_ptr<TH2D> pion_template_em;
   std::shared_ptr<TH2D> pion_template_had;
@@ -53,18 +54,6 @@ private:
   std::shared_ptr<TH2D> pion_had_etaEmi;
   std::shared_ptr<TH2D> pion_em_etaEmi;
 
-  std::shared_ptr<TH2D> muon_had_etaEpl;
-  std::shared_ptr<TH2D> muon_em_etaEpl;
-  std::shared_ptr<TH2D> muon_had_etaTpl;
-  std::shared_ptr<TH2D> muon_em_etaTpl;
-  std::shared_ptr<TH2D> muon_ho_etaB;
-  std::shared_ptr<TH2D> muon_had_etaB;
-  std::shared_ptr<TH2D> muon_em_etaB;
-  std::shared_ptr<TH2D> muon_had_etaTmi;
-  std::shared_ptr<TH2D> muon_em_etaTmi;
-  std::shared_ptr<TH2D> muon_had_etaEmi;
-  std::shared_ptr<TH2D> muon_em_etaEmi;
-
   double pbx;
   double pby;
   double pbz;
@@ -72,8 +61,6 @@ private:
   double psx;
   double psy;
   double psz;
-
-  double muon_compatibility;
 
   bool use_corrected_hcal;
   bool use_em_special;

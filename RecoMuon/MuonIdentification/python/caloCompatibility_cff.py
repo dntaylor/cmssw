@@ -8,7 +8,12 @@ MuonCaloCompatibilityBlock = cms.PSet(
         delta_eta = cms.double(0.02),
         delta_phi = cms.double(0.02),
         allSiPMHO = cms.bool(False)
-    )
+    ),
+    DeepCaloMuonConfiguration = cms.PSet(
+        memmapped = cms.bool(False),
+        graphDefinitions = cms.VPSet(),
+    ),
+    caloMuonLabel = cms.string(""),
 )
 
 

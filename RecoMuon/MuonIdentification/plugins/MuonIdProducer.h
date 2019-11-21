@@ -32,6 +32,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/FileInPath.h"
 
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/TrackReco/interface/Track.h"
@@ -60,14 +61,17 @@
 #include "RecoMuon/MuonIdentification/interface/MuonArbitrationMethods.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 
+#include "RecoMuon/MuonIdentification/interface/DeepMuonCache.h"
+#include "RecoMuon/MuonIdentification/interface/DeepMuonCaloCompatibility.h"
+
 class MuonMesh;
 class MuonKinkFinder;
 
-class MuonIdProducer : public edm::stream::EDProducer<> {
+class MuonIdProducer : public edm::stream::EDProducer<edm::GlobalCache<DeepMuonCache> > {
 public:
   typedef reco::Muon::MuonTrackType TrackType;
-
-  explicit MuonIdProducer(const edm::ParameterSet&);
+  
+  explicit MuonIdProducer(const edm::ParameterSet&, const DeepMuonCache*);
 
   ~MuonIdProducer() override;
 
@@ -77,6 +81,9 @@ public:
   static double sectorPhi(const DetId& id);
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
+  static std::unique_ptr<DeepMuonCache> initializeGlobalCache(const edm::ParameterSet& cfg);
+  static void globalEndJob(const DeepMuonCache* cache) {}
 
 private:
   void fillMuonId(edm::Event&,
@@ -195,6 +202,7 @@ private:
 
   std::unique_ptr<MuonShowerDigiFiller> theShowerDigiFiller_;
 
+<<<<<<< HEAD
   // selections
   double minPt_;
   double minP_;
@@ -247,6 +255,8 @@ private:
   edm::Handle<edm::ValueMap<reco::MuonQuality> > glbQualHandle_;
 
   MuonCaloCompatibility muonCaloCompatibility_;
+  std::map<std::string, DeepMuonCaloCompatibility*> deepMuonCaloCompatibilities_;
+  std::vector<std::string> deepCaloMuonLabels_;
   std::unique_ptr<reco::isodeposit::IsoDepositExtractor> muIsoExtractorCalo_;
   std::unique_ptr<reco::isodeposit::IsoDepositExtractor> muIsoExtractorTrack_;
   std::unique_ptr<reco::isodeposit::IsoDepositExtractor> muIsoExtractorJet_;
@@ -264,8 +274,11 @@ private:
   std::unique_ptr<MuonKinkFinder> trackerKinkFinder_;
 
   double caloCut_;
+  std::string caloMuonLabel_;
 
   bool arbClean_;
   std::unique_ptr<MuonMesh> meshAlgo_;
+
+  const DeepMuonCache* cache_;
 };
 #endif
