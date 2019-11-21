@@ -188,6 +188,7 @@ void DeepMuonCaloCompatibility::configure(const edm::ParameterSet& iConfig)
 double DeepMuonCaloCompatibility::evaluate(const reco::Muon& muon) {
     const tensorflow::Tensor pred = getPrediction(muon);
     double muon_compatibility = (double)pred.matrix<float>()(0,kMuonPosition_);
+    //std::cout << "muon score " << muon_compatibility << std::endl;
     return muon_compatibility;
 }
 
@@ -235,10 +236,16 @@ tensorflow::Tensor DeepMuonCaloCompatibility::getPrediction(const reco::Muon& mu
 void DeepMuonCaloCompatibility::getPrediction_run3_v1(const reco::Muon& muon, std::vector<tensorflow::Tensor>& pred_vector) {
   createInnerTrackBlockInputs(muon);
 
+  //std::cout << "input innerTrack " << inputTensors_.at(kInnerTrack_).second.DebugString() << std::endl;
+  //std::cout << inputTensors_.at(kInnerTrack_).second.matrix<float>() << std::endl;
+
   tensorflow::run(&(cache_->getSession(name_)),
                   inputTensors_,
                   {outputName_},
                   &pred_vector);
+
+  //std::cout << "prediction " << pred_vector[0].DebugString() << std::endl;
+  //std::cout << pred_vector[0].matrix<float>() << std::endl;
 
 }
 
@@ -247,10 +254,18 @@ void DeepMuonCaloCompatibility::getPrediction_run3_v2(const reco::Muon& muon, st
   createInnerTrackBlockInputs(muon);
   createHcalDigiBlockInputs(muon);
 
+  //std::cout << "input innerTrack " << inputTensors_.at(kInnerTrack_).second.DebugString() << std::endl;
+  //std::cout << inputTensors_.at(kInnerTrack_).second.matrix<float>() << std::endl;
+  //std::cout << "input hcalDigi " << inputTensors_.at(kHcalDigi_).second.DebugString() << std::endl;
+  //std::cout << inputTensors_.at(kHcalDigi_).second.tensor<float,3>() << std::endl;
+
   tensorflow::run(&(cache_->getSession(name_)),
                   inputTensors_,
                   {outputName_},
                   &pred_vector);
+
+  //std::cout << "prediction " << pred_vector[0].DebugString() << std::endl;
+  //std::cout << pred_vector[0].matrix<float>() << std::endl;
 
 }
 
@@ -260,6 +275,7 @@ void DeepMuonCaloCompatibility::createInnerTrackBlockInputs(const reco::Muon& mu
 
     // at the moment, v1 and v2 must be the same
     namespace dnn = caloMuonInputs_run3_v1::InnerTrackBlockInputs;
+    //std::cout << "inner track" << std::endl;
     int v;
     v = dnn::muon_innerTrack_p;
     inputs.matrix<float>()(0, v) = getValueNorm(muon.innerTrack().isNonnull() ? muon.innerTrack()->p() : 0.0, means_[v], sigmas_[v]);
@@ -327,6 +343,7 @@ void DeepMuonCaloCompatibility::createHcalDigiBlockInputs(const reco::Muon& muon
     }
     for (auto it: muon.calEnergy().crossedHadRecHits) {
       // limit the number of digis, this is large enough in run3 that we shouldnt actually reach this point even in the endcap
+      //std::cout << "hcal digi " << idh << std::endl;
       if (idh>=caloMuonInputs_run3_v2::NumberOfHcalDigis) continue;
       v = dnn::muon_calEnergy_crossedHadRecHits_ieta;
       inputs.tensor<float,3>()(0, v, idh) = getValueNorm(it.detId.ieta()-did.ieta(), means_[v+nit], sigmas_[v+nit]);

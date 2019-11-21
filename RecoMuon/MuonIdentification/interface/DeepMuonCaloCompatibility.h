@@ -46,6 +46,7 @@ class DeepMuonCaloCompatibility : public MuonCaloCompatibilityBase {
       const float fixed_value = getValue(value);
       const float clamped_value = std::clamp(fixed_value, min_value, max_value);
       float transformed_value = (clamped_value - min_value) / (max_value - min_value);
+      //std::cout << "linearized " << value << " " << min_value << " " << max_value << " " << transformed_value << std::endl;
       return transformed_value;
     }
 
@@ -60,6 +61,7 @@ class DeepMuonCaloCompatibility : public MuonCaloCompatibilityBase {
       else {
           result = norm_value;
       }
+      //std::cout << "normalized " << value << " " << mean << " " << sigma << " " << result << std::endl;
       return result;
     }
 
