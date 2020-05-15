@@ -6,7 +6,7 @@
 // Package:    MuonTimingProducer
 // Class:      MuonTimingProducer
 //
-/**\class MuonTimingProducer MuonTimingProducer.h RecoMuon/MuonIdentification/interface/MuonTimingProducer.h
+/**\class MuonTimingProducer MuonTimingProducer.h RecoMuon/TrackingTools/interface/MuonTimingProducer.h
 
  Description: <one line class summary>
 
@@ -32,11 +32,13 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/MuonReco/interface/MuonTimeExtra.h"
-#include "RecoMuon/MuonIdentification/interface/MuonTimingFiller.h"
+#include "RecoMuon/TrackingTools/interface/MuonTimingFiller.h"
 
 //
 // class decleration
 //
+
+class MuonServiceProxy;
 
 class MuonTimingProducer : public edm::stream::EDProducer<> {
 public:
@@ -49,6 +51,9 @@ private:
   // ----------member data ---------------------------
   edm::InputTag m_muonCollection;
   edm::EDGetTokenT<reco::MuonCollection> muonToken_;
+
+  // the event setup proxy, it takes care the services update
+  std::unique_ptr<MuonServiceProxy> theService;
 
   MuonTimingFiller* theTimingFiller_;
 };

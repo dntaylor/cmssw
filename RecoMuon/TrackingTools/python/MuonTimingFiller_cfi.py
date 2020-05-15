@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
-from RecoMuon.MuonIdentification.DTTimingExtractor_cfi import *
-from RecoMuon.MuonIdentification.CSCTimingExtractor_cfi import *
+from RecoMuon.TrackingTools.DTTimingExtractor_cfi import *
+from RecoMuon.TrackingTools.CSCTimingExtractor_cfi import *
 from RecoMuon.TrackingTools.MuonSegmentMatcher_cff import *
 
 TimingFillerBlock = cms.PSet(

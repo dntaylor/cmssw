@@ -1,7 +1,7 @@
-#ifndef MuonIdentification_TimeMeasurementSequence_h
-#define MuonIdentification_TimeMeasurementSequence_h
+#ifndef TrackingTools_TimeMeasurementSequence_h
+#define TrackingTools_TimeMeasurementSequence_h
 
-/** \class reco::TimeMeasurementSequence TimeMeasurementSequence.h RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h
+/** \class reco::TimeMeasurementSequence TimeMeasurementSequence.h RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h
  *  
  * A class holding a set of individual time measurements along the muon trajectory
  *

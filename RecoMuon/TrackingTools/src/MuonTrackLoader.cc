@@ -12,6 +12,8 @@
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 #include "RecoMuon/TrackingTools/interface/MuonUpdatorAtVertex.h"
 
+#include "RecoMuon/TrackingTools/interface/MuonTimingFiller.h"
+
 #include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "TrackingTools/TrackFitters/interface/TrajectoryFitter.h"
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
@@ -104,6 +106,10 @@ MuonTrackLoader::MuonTrackLoader(ParameterSet& parameterSet,
 
   // update at vertex
   theUpdatingAtVtx = parameterSet.getParameter<bool>("VertexConstraint");
+
+  // timing filler
+  edm::ParameterSet timingParameters = parameterSet.getParameter<edm::ParameterSet>("TimingFillerParameters");
+  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, iC);
 
   // beam spot input tag
   theBeamSpotInputTag = parameterSet.getParameter<edm::InputTag>("beamSpot");
@@ -239,7 +245,7 @@ OrphanHandle<reco::TrackCollection> MuonTrackLoader::loadTracks(TrajectoryContai
 
     // build the "bare" track from the trajectory.
     // This track has the parameters defined at PCA (no update)
-    pair<bool, reco::Track> resultOfTrackExtrapAtPCA = buildTrackAtPCA(trajectory, *beamSpot);
+    pair<bool, reco::Track> resultOfTrackExtrapAtPCA = buildTrackAtPCA(trajectory, *beamSpot, event);
 
     // Check if the extrapolation went well
     if (!resultOfTrackExtrapAtPCA.first) {
@@ -263,7 +269,7 @@ OrphanHandle<reco::TrackCollection> MuonTrackLoader::loadTracks(TrajectoryContai
 
     if (theUpdatingAtVtx) {
       // build the "bare" track UPDATED at vtx
-      updateResult = buildTrackUpdatedAtPCA(track, *beamSpot);
+      updateResult = buildTrackUpdatedAtPCA(track, *beamSpot, event);
 
       if (!updateResult.first)
         ++trackIndex;
@@ -572,7 +578,7 @@ OrphanHandle<reco::TrackCollection> MuonTrackLoader::loadTracks(
 
     // build the "bare" track from the trajectory.
     // This track has the parameters defined at PCA (no update)
-    pair<bool, reco::Track> resultOfTrackExtrapAtPCA = buildTrackAtPCA(trajectory, *beamSpot);
+    pair<bool, reco::Track> resultOfTrackExtrapAtPCA = buildTrackAtPCA(trajectory, *beamSpot, event);
 
     // Check if the extrapolation went well
     if (!resultOfTrackExtrapAtPCA.first) {
@@ -670,7 +676,8 @@ OrphanHandle<reco::TrackCollection> MuonTrackLoader::loadTracks(
 }
 
 pair<bool, reco::Track> MuonTrackLoader::buildTrackAtPCA(const Trajectory& trajectory,
-                                                         const reco::BeamSpot& beamSpot) const {
+                                                         const reco::BeamSpot& beamSpot,
+                                                         edm::Event& event) const {
   const string metname = "Muon|RecoMuon|MuonTrackLoader";
 
   MuonPatternRecoDumper debug;
@@ -713,14 +720,33 @@ pair<bool, reco::Track> MuonTrackLoader::buildTrackAtPCA(const Trajectory& traje
     bon = false;
   double ndof = trajectory.ndof(bon);
 
-  reco::Track track(
+  // build tmp track for MuonTimingFiller
+  reco::Track tmpTrack(
       trajectory.chiSquared(), ndof, persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError());
+      
+  // fill timing information
+  reco::MuonTime muonTime;
+  reco::MuonTimeExtra dtTime;
+  reco::MuonTimeExtra cscTime;
+  reco::MuonTime rpcTime;
+  reco::MuonTimeExtra combinedTime;
+
+  theTimingFiller_->fillTiming(tmpTrack, dtTime, cscTime, rpcTime, combinedTime, event);
+
+  double t0 = combinedTime.timeAtIpInOut();
+  double beta = 0;
+  double covt0t0 = combinedTime.timeAtIpInOutErr() * combinedTime.timeAtIpInOutErr();
+  double covbetabeta = -1;
+  reco::Track track(
+      trajectory.chiSquared(), ndof, persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError(),
+      reco::TrackBase::undefAlgorithm, reco::TrackBase::undefQuality, t0, beta, covt0t0, covbetabeta);
 
   return pair<bool, reco::Track>(true, track);
 }
 
 pair<bool, reco::Track> MuonTrackLoader::buildTrackUpdatedAtPCA(const reco::Track& track,
-                                                                const reco::BeamSpot& beamSpot) const {
+                                                                const reco::BeamSpot& beamSpot,
+                                                                edm::Event& event) const {
   const string metname = "Muon|RecoMuon|MuonTrackLoader";
   MuonPatternRecoDumper debug;
 
@@ -744,8 +770,13 @@ pair<bool, reco::Track> MuonTrackLoader::buildTrackUpdatedAtPCA(const reco::Trac
   GlobalVector p = ftsAtVtx.momentum();
   math::XYZVector persistentMomentum(p.x(), p.y(), p.z());
 
+  double t0 = track.t0();
+  double beta = track.beta();
+  double covt0t0 = track.covt0t0();
+  double covbetabeta = track.covBetaBeta();
   reco::Track updatedTrack(
-      track.chi2(), track.ndof(), persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError());
+      track.chi2(), track.ndof(), persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError(),
+      reco::TrackBase::undefAlgorithm, reco::TrackBase::undefQuality, t0, beta, covt0t0, covbetabeta);
 
   return pair<bool, reco::Track>(true, updatedTrack);
 }

@@ -67,6 +67,7 @@ public:
   double match_Rpos(const TrajectoryStateOnSurface&, const TrajectoryStateOnSurface&) const;
   double match_Chi2(const TrajectoryStateOnSurface&, const TrajectoryStateOnSurface&) const;
   double match_dist(const TrajectoryStateOnSurface&, const TrajectoryStateOnSurface&) const;
+  double match_time(const reco::TrackRef, const reco::TrackRef) const;
 
   std::pair<TrajectoryStateOnSurface, TrajectoryStateOnSurface> convertToTSOSTk(const TrackCand&,
                                                                                 const TrackCand&) const;

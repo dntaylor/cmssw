@@ -2,7 +2,7 @@
 // Package:    MuonTimingProducer
 // Class:      MuonTimingProducer
 //
-/**\class MuonTimingProducer MuonTimingProducer.cc RecoMuon/MuonIdentification/src/MuonTimingProducer.cc
+/**\class MuonTimingProducer MuonTimingProducer.cc RecoMuon/TrackingTools/src/MuonTimingProducer.cc
 
  Description: <one line class summary>
 
@@ -20,7 +20,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-//#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -32,8 +32,8 @@
 #include "DataFormats/MuonReco/interface/MuonTimeExtra.h"
 #include "DataFormats/MuonReco/interface/MuonTimeExtraMap.h"
 
-#include "RecoMuon/MuonIdentification/plugins/MuonTimingProducer.h"
-#include "RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h"
+#include "RecoMuon/TrackingTools/plugins/MuonTimingProducer.h"
+#include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 
 //
 // constructors and destructor
@@ -43,11 +43,15 @@ MuonTimingProducer::MuonTimingProducer(const edm::ParameterSet& iConfig) {
   produces<reco::MuonTimeExtraMap>("dt");
   produces<reco::MuonTimeExtraMap>("csc");
 
+  edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
+  theService = std::make_unique<MuonServiceProxy>(serviceParameters, consumesCollector());
+
   m_muonCollection = iConfig.getParameter<edm::InputTag>("MuonCollection");
   muonToken_ = consumes<reco::MuonCollection>(m_muonCollection);
   // Load parameters for the TimingFiller
   edm::ParameterSet fillerParameters = iConfig.getParameter<edm::ParameterSet>("TimingFillerParameters");
-  theTimingFiller_ = new MuonTimingFiller(fillerParameters, consumesCollector());
+  edm::ConsumesCollector iC = consumesCollector();
+  theTimingFiller_ = new MuonTimingFiller(fillerParameters, iC, theService.get());
 }
 
 MuonTimingProducer::~MuonTimingProducer() {
@@ -77,6 +81,9 @@ void MuonTimingProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSet
   std::vector<reco::MuonTimeExtra> cscTimeColl(nMuons);
   std::vector<reco::MuonTimeExtra> combinedTimeColl(nMuons);
 
+  // Update the services
+  theService->update(iSetup);
+
   for (unsigned int i = 0; i < nMuons; ++i) {
     reco::MuonTimeExtra dtTime;
     reco::MuonTimeExtra cscTime;
@@ -85,7 +92,7 @@ void MuonTimingProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSet
 
     reco::MuonRef muonr(muons, i);
 
-    theTimingFiller_->fillTiming(*muonr, dtTime, cscTime, rpcTime, combinedTime, iEvent, iSetup);
+    theTimingFiller_->fillTiming(*muonr, dtTime, cscTime, rpcTime, combinedTime, iEvent);
 
     dtTimeColl[i] = dtTime;
     cscTimeColl[i] = cscTime;
@@ -105,4 +112,4 @@ void MuonTimingProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSet
 }
 
 //define this as a plug-in
-//DEFINE_FWK_MODULE(MuonTimingProducer);
+DEFINE_FWK_MODULE(MuonTimingProducer);

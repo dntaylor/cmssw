@@ -5,6 +5,7 @@
 <use   name="FWCore/PluginManager"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="RecoMuon/MuonIdentification"/>
+<use   name="RecoMuon/TrackingTools"/>
 <use   name="DataFormats/RecoCandidate"/>
 <use   name="CommonTools/UtilAlgos"/>
 <use   name="boost"/>

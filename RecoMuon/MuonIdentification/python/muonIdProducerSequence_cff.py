@@ -12,7 +12,7 @@ from TrackPropagation.SteppingHelixPropagator.SteppingHelixPropagatorOpposite_cf
 from TrackingTools.TrackAssociator.DetIdAssociatorESProducer_cff import *
 from RecoMuon.MuonIdentification.isolation_cff import *
 from RecoMuon.MuonIdentification.muons1stStep_cfi import *
-from RecoMuon.MuonIdentification.muonTiming_cfi import *
+from RecoMuon.TrackingTools.muonTiming_cfi import *
 # Glb Track Quality
 from RecoMuon.GlobalTrackingTools.GlobalTrackQuality_cfi import *
 muons1stStep.fillGlobalTrackQuality = True

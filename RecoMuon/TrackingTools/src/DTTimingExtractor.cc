@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    MuonIdentification
+// Package:    TrackingTools
 // Class:      DTTimingExtractor
 //
-/**\class DTTimingExtractor DTTimingExtractor.cc RecoMuon/MuonIdentification/src/DTTimingExtractor.cc
+/**\class DTTimingExtractor DTTimingExtractor.cc RecoMuon/TrackingTools/src/DTTimingExtractor.cc
  *
  * Description: Produce timing information for a muon track using 1D DT hits from segments used to build the track
  *
@@ -14,7 +14,7 @@
 //
 //
 
-#include "RecoMuon/MuonIdentification/interface/DTTimingExtractor.h"
+#include "RecoMuon/TrackingTools/interface/DTTimingExtractor.h"
 
 // user include files
 #include "FWCore/Framework/interface/ConsumesCollector.h"
@@ -73,7 +73,8 @@ class MuonServiceProxy;
 //
 DTTimingExtractor::DTTimingExtractor(const edm::ParameterSet& iConfig,
                                      MuonSegmentMatcher* segMatcher,
-                                     edm::ConsumesCollector& iC)
+                                     edm::ConsumesCollector& iC,
+                                     const MuonServiceProxy* service)
     : theHitsMin_(iConfig.getParameter<int>("HitsMin")),
       thePruneCut_(iConfig.getParameter<double>("PruneCut")),
       theTimeOffset_(iConfig.getParameter<double>("DTTimeOffset")),
@@ -82,10 +83,9 @@ DTTimingExtractor::DTTimingExtractor(const edm::ParameterSet& iConfig,
       doWireCorr_(iConfig.getParameter<bool>("DoWireCorr")),
       dropTheta_(iConfig.getParameter<bool>("DropTheta")),
       requireBothProjections_(iConfig.getParameter<bool>("RequireBothProjections")),
-      debug(iConfig.getParameter<bool>("debug")) {
-  edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
-  theService = std::make_unique<MuonServiceProxy>(serviceParameters, edm::ConsumesCollector(iC));
-  theMatcher = segMatcher;
+      debug(iConfig.getParameter<bool>("debug")),
+      theMatcher(segMatcher),
+      theService(service) {
 }
 
 DTTimingExtractor::~DTTimingExtractor() {}
@@ -95,30 +95,27 @@ DTTimingExtractor::~DTTimingExtractor() {}
 //
 void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
                                    const std::vector<const DTRecSegment4D*>& segments,
-                                   reco::TrackRef muonTrack,
-                                   const edm::Event& iEvent,
-                                   const edm::EventSetup& iSetup) {
+                                   const reco::Track& muonTrack,
+                                   const edm::Event& iEvent) {
   if (debug)
     std::cout << " *** DT Timimng Extractor ***" << std::endl;
-
-  theService->update(iSetup);
 
   const GlobalTrackingGeometry* theTrackingGeometry = &*theService->trackingGeometry();
 
   // get the DT geometry
   edm::ESHandle<DTGeometry> theDTGeom;
-  iSetup.get<MuonGeometryRecord>().get(theDTGeom);
+  theService->eventSetup().get<MuonGeometryRecord>().get(theDTGeom);
 
   // get the propagator
   edm::ESHandle<Propagator> propagator;
-  iSetup.get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
+  theService->eventSetup().get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
   const Propagator* propag = propagator.product();
 
-  math::XYZPoint pos = muonTrack->innerPosition();
-  math::XYZVector mom = muonTrack->innerMomentum();
+  math::XYZPoint pos = muonTrack.innerPosition();
+  math::XYZVector mom = muonTrack.innerMomentum();
   GlobalPoint posp(pos.x(), pos.y(), pos.z());
   GlobalVector momv(mom.x(), mom.y(), mom.z());
-  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack->charge(), theService->magneticField().product());
+  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());
 
   // create a collection on TimeMeasurements for the track
   std::vector<TimeMeasurement> tms;
@@ -380,15 +377,14 @@ void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
 
 // ------------ method called to produce the data  ------------
 void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
-                                   reco::TrackRef muonTrack,
-                                   const edm::Event& iEvent,
-                                   const edm::EventSetup& iSetup) {
+                                   const reco::Track& muonTrack,
+                                   const edm::Event& iEvent) {
   // get the DT segments that were used to construct the muon
-  std::vector<const DTRecSegment4D*> range = theMatcher->matchDT(*muonTrack, iEvent);
+  std::vector<const DTRecSegment4D*> range = theMatcher->matchDT(muonTrack, iEvent);
 
   if (debug)
     std::cout << " The muon track matches " << range.size() << " segments." << std::endl;
-  fillTiming(tmSequence, range, muonTrack, iEvent, iSetup);
+  fillTiming(tmSequence, range, muonTrack, iEvent);
 }
 
 double DTTimingExtractor::fitT0(double& a,

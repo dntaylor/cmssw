@@ -2,7 +2,7 @@
 // Package:    MuonTimingFiller
 // Class:      MuonTimingFiller
 //
-/**\class MuonTimingFiller MuonTimingFiller.cc RecoMuon/MuonIdentification/src/MuonTimingFiller.cc
+/**\class MuonTimingFiller MuonTimingFiller.cc RecoMuon/TrackingTools/src/MuonTimingFiller.cc
 
  Description: <one line class summary>
 
@@ -33,14 +33,18 @@
 #include "DataFormats/MuonReco/interface/MuonTimeExtraMap.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 
-#include "RecoMuon/MuonIdentification/interface/MuonTimingFiller.h"
-#include "RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h"
+#include "RecoMuon/TrackingTools/interface/MuonTimingFiller.h"
+#include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 #include "DataFormats/EcalDetId/interface/EcalSubdetector.h"
+#include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
 //
 // constructors and destructor
 //
-MuonTimingFiller::MuonTimingFiller(const edm::ParameterSet& iConfig, edm::ConsumesCollector&& iC) {
+MuonTimingFiller::MuonTimingFiller(const edm::ParameterSet& iConfig,
+                                   edm::ConsumesCollector& iC,
+                                   const MuonServiceProxy* service)
+    : theService(service) {
   // Load parameters for the DTTimingExtractor
   edm::ParameterSet dtTimingParameters = iConfig.getParameter<edm::ParameterSet>("DTTimingParameters");
 
@@ -55,8 +59,8 @@ MuonTimingFiller::MuonTimingFiller(const edm::ParameterSet& iConfig, edm::Consum
     matchParameters = dtTimingParameters.getParameter<edm::ParameterSet>("MatchParameters");
 
   theMatcher_ = std::make_unique<MuonSegmentMatcher>(matchParameters, iC);
-  theDTTimingExtractor_ = std::make_unique<DTTimingExtractor>(dtTimingParameters, theMatcher_.get(), iC);
-  theCSCTimingExtractor_ = std::make_unique<CSCTimingExtractor>(cscTimingParameters, theMatcher_.get(), iC);
+  theDTTimingExtractor_ = std::make_unique<DTTimingExtractor>(dtTimingParameters, theMatcher_.get(), iC, service);
+  theCSCTimingExtractor_ = std::make_unique<CSCTimingExtractor>(cscTimingParameters, theMatcher_.get(), iC, service);
 
   errorEB_ = iConfig.getParameter<double>("ErrorEB");
   errorEE_ = iConfig.getParameter<double>("ErrorEE");
@@ -78,17 +82,16 @@ void MuonTimingFiller::fillTiming(const reco::Muon& muon,
                                   reco::MuonTimeExtra& cscTime,
                                   reco::MuonTime& rpcTime,
                                   reco::MuonTimeExtra& combinedTime,
-                                  edm::Event& iEvent,
-                                  const edm::EventSetup& iSetup) {
+                                  edm::Event& iEvent) {
   TimeMeasurementSequence dtTmSeq, cscTmSeq;
 
   if (!(muon.combinedMuon().isNull())) {
-    theDTTimingExtractor_->fillTiming(dtTmSeq, muon.combinedMuon(), iEvent, iSetup);
-    theCSCTimingExtractor_->fillTiming(cscTmSeq, muon.combinedMuon(), iEvent, iSetup);
+    theDTTimingExtractor_->fillTiming(dtTmSeq, *muon.combinedMuon(), iEvent);
+    theCSCTimingExtractor_->fillTiming(cscTmSeq, *muon.combinedMuon(), iEvent);
   } else {
     if (!(muon.standAloneMuon().isNull())) {
-      theDTTimingExtractor_->fillTiming(dtTmSeq, muon.standAloneMuon(), iEvent, iSetup);
-      theCSCTimingExtractor_->fillTiming(cscTmSeq, muon.standAloneMuon(), iEvent, iSetup);
+      theDTTimingExtractor_->fillTiming(dtTmSeq, *muon.standAloneMuon(), iEvent);
+      theCSCTimingExtractor_->fillTiming(cscTmSeq, *muon.standAloneMuon(), iEvent);
     } else {
       if (muon.isTrackerMuon()) {
         std::vector<const DTRecSegment4D*> dtSegments;
@@ -107,11 +110,53 @@ void MuonTimingFiller::fillTiming(const reco::Muon& muon,
             }
           }
         }
-        theDTTimingExtractor_->fillTiming(dtTmSeq, dtSegments, muon.innerTrack(), iEvent, iSetup);
-        theCSCTimingExtractor_->fillTiming(cscTmSeq, cscSegments, muon.innerTrack(), iEvent, iSetup);
+        theDTTimingExtractor_->fillTiming(dtTmSeq, dtSegments, *muon.innerTrack(), iEvent);
+        theCSCTimingExtractor_->fillTiming(cscTmSeq, cscSegments, *muon.innerTrack(), iEvent);
       }
     }
   }
+
+  // Fill DT-specific timing information block
+  fillTimeFromMeasurements(dtTmSeq, dtTime);
+
+  // Fill CSC-specific timing information block
+  fillTimeFromMeasurements(cscTmSeq, cscTime);
+
+  // Fill RPC-specific timing information block
+  if (!muon.standAloneMuon().isNull())
+    fillRPCTime(*muon.standAloneMuon(), rpcTime, iEvent);
+
+  // Combine the TimeMeasurementSequences from DT/CSC subdetectors
+  TimeMeasurementSequence combinedTmSeq;
+  combineTMSequences(dtTmSeq, cscTmSeq, combinedTmSeq);
+  // add ECAL info
+  if (useECAL_)
+    addEcalTime(muon, combinedTmSeq);
+
+  // Fill the master timing block
+  fillTimeFromMeasurements(combinedTmSeq, combinedTime);
+
+  LogTrace("MuonTime") << "Global 1/beta: " << combinedTime.inverseBeta() << " +/- " << combinedTime.inverseBetaErr()
+                       << std::endl;
+  LogTrace("MuonTime") << "  Free 1/beta: " << combinedTime.freeInverseBeta() << " +/- "
+                       << combinedTime.freeInverseBetaErr() << std::endl;
+  LogTrace("MuonTime") << "  Vertex time (in-out): " << combinedTime.timeAtIpInOut() << " +/- "
+                       << combinedTime.timeAtIpInOutErr() << "  # of points: " << combinedTime.nDof() << std::endl;
+  LogTrace("MuonTime") << "  Vertex time (out-in): " << combinedTime.timeAtIpOutIn() << " +/- "
+                       << combinedTime.timeAtIpOutInErr() << std::endl;
+  LogTrace("MuonTime") << "  direction: " << combinedTime.direction() << std::endl;
+}
+
+void MuonTimingFiller::fillTiming(const reco::Track& muon,
+                                  reco::MuonTimeExtra& dtTime,
+                                  reco::MuonTimeExtra& cscTime,
+                                  reco::MuonTime& rpcTime,
+                                  reco::MuonTimeExtra& combinedTime,
+                                  edm::Event& iEvent) {
+  TimeMeasurementSequence dtTmSeq, cscTmSeq;
+
+  theDTTimingExtractor_->fillTiming(dtTmSeq, muon, iEvent);
+  theCSCTimingExtractor_->fillTiming(cscTmSeq, muon, iEvent);
 
   // Fill DT-specific timing information block
   fillTimeFromMeasurements(dtTmSeq, dtTime);
@@ -124,10 +169,7 @@ void MuonTimingFiller::fillTiming(const reco::Muon& muon,
 
   // Combine the TimeMeasurementSequences from DT/CSC subdetectors
   TimeMeasurementSequence combinedTmSeq;
-  combineTMSequences(muon, dtTmSeq, cscTmSeq, combinedTmSeq);
-  // add ECAL info
-  if (useECAL_)
-    addEcalTime(muon, combinedTmSeq);
+  combineTMSequences(dtTmSeq, cscTmSeq, combinedTmSeq);
 
   // Fill the master timing block
   fillTimeFromMeasurements(combinedTmSeq, combinedTime);
@@ -192,14 +234,10 @@ void MuonTimingFiller::fillTimeFromMeasurements(const TimeMeasurementSequence& t
   muTime.setNDof(tmSeq.dstnc.size());
 }
 
-void MuonTimingFiller::fillRPCTime(const reco::Muon& muon, reco::MuonTime& rpcTime, edm::Event& iEvent) {
+void MuonTimingFiller::fillRPCTime(const reco::Track& staTrack, reco::MuonTime& rpcTime, edm::Event& iEvent) {
   double trpc = 0, trpc2 = 0;
 
-  reco::TrackRef staTrack = muon.standAloneMuon();
-  if (staTrack.isNull())
-    return;
-
-  const std::vector<const RPCRecHit*> rpcHits = theMatcher_->matchRPC(*staTrack, iEvent);
+  const std::vector<const RPCRecHit*> rpcHits = theMatcher_->matchRPC(staTrack, iEvent);
   const int nrpc = rpcHits.size();
   for (const auto& hitRPC : rpcHits) {
     const double time = hitRPC->timeError() < 0 ? hitRPC->BunchX() * 25. : hitRPC->time();
@@ -223,8 +261,7 @@ void MuonTimingFiller::fillRPCTime(const reco::Muon& muon, reco::MuonTime& rpcTi
   rpcTime.timeAtIpOutInErr = 0.;
 }
 
-void MuonTimingFiller::combineTMSequences(const reco::Muon& muon,
-                                          const TimeMeasurementSequence& dtSeq,
+void MuonTimingFiller::combineTMSequences(const TimeMeasurementSequence& dtSeq,
                                           const TimeMeasurementSequence& cscSeq,
                                           TimeMeasurementSequence& cmbSeq) {
   if (useDT_)

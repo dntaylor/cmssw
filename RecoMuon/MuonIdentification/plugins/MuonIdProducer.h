@@ -43,7 +43,7 @@
 #include "TrackingTools/TrackAssociator/interface/TrackDetectorAssociator.h"
 // #include "Utilities/Timing/interface/TimerStack.h"
 
-#include "RecoMuon/MuonIdentification/interface/MuonTimingFiller.h"
+#include "RecoMuon/TrackingTools/interface/MuonTimingFiller.h"
 #include "RecoMuon/MuonIdentification/interface/MuonCaloCompatibility.h"
 #include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractor.h"
 #include "RecoMuon/MuonIdentification/interface/MuonShowerDigiFiller.h"
@@ -62,6 +62,7 @@
 
 class MuonMesh;
 class MuonKinkFinder;
+class MuonServiceProxy;
 
 class MuonIdProducer : public edm::stream::EDProducer<> {
 public:
@@ -245,6 +246,9 @@ private:
 
   edm::Handle<RPCRecHitCollection> rpcHitHandle_;
   edm::Handle<edm::ValueMap<reco::MuonQuality> > glbQualHandle_;
+
+  // the event setup proxy, it takes care the services update
+  std::unique_ptr<MuonServiceProxy> theService;
 
   MuonCaloCompatibility muonCaloCompatibility_;
   std::unique_ptr<reco::isodeposit::IsoDepositExtractor> muIsoExtractorCalo_;

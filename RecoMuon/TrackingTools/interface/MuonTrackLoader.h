@@ -39,6 +39,7 @@ class TrajectorySmoother;
 class ForwardDetLayer;
 class BarrelDetLayer;
 class TrackerTopology;
+class MuonTimingFiller;
 
 class MuonTrackLoader {
 public:
@@ -83,10 +84,10 @@ private:
   static std::vector<const TrackingRecHit*> unpackHit(const TrackingRecHit& hit);
 
   /// Build a track at the PCA WITHOUT any vertex constriant
-  std::pair<bool, reco::Track> buildTrackAtPCA(const Trajectory& trajectory, const reco::BeamSpot&) const;
+  std::pair<bool, reco::Track> buildTrackAtPCA(const Trajectory& trajectory, const reco::BeamSpot&, edm::Event&) const;
 
   /// Takes a track at the PCA and applies the vertex constriant
-  std::pair<bool, reco::Track> buildTrackUpdatedAtPCA(const reco::Track& trackAtPCA, const reco::BeamSpot&) const;
+  std::pair<bool, reco::Track> buildTrackUpdatedAtPCA(const reco::Track& trackAtPCA, const reco::BeamSpot&, edm::Event&) const;
 
   reco::TrackExtra buildTrackExtra(const Trajectory&) const;
 
@@ -94,6 +95,8 @@ private:
 
   bool theUpdatingAtVtx;
   std::unique_ptr<MuonUpdatorAtVertex> theUpdatorAtVtx;
+
+  std::unique_ptr<MuonTimingFiller> theTimingFiller_;
 
   bool theTrajectoryFlag;
 

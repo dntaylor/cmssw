@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    MuonIdentification
+// Package:    TrackingTools
 // Class:      CSCTimingExtractor
 //
-/**\class CSCTimingExtractor CSCTimingExtractor.cc RecoMuon/MuonIdentification/src/CSCTimingExtractor.cc
+/**\class CSCTimingExtractor CSCTimingExtractor.cc RecoMuon/TrackingTools/src/CSCTimingExtractor.cc
  *
  * Description: Produce timing information for a muon track using CSC hits from segments used to build the track
  *
@@ -14,7 +14,7 @@
 //
 //
 
-#include "RecoMuon/MuonIdentification/interface/CSCTimingExtractor.h"
+#include "RecoMuon/TrackingTools/interface/CSCTimingExtractor.h"
 
 // user include files
 #include "FWCore/Framework/interface/ConsumesCollector.h"
@@ -60,14 +60,13 @@ namespace edm {
   class InputTag;
 }  // namespace edm
 
-class MuonServiceProxy;
-
 //
 // constructors and destructor
 //
 CSCTimingExtractor::CSCTimingExtractor(const edm::ParameterSet& iConfig,
                                        MuonSegmentMatcher* segMatcher,
-                                       edm::ConsumesCollector& iC)
+                                       edm::ConsumesCollector& iC,
+                                       const MuonServiceProxy* service)
     : thePruneCut_(iConfig.getParameter<double>("PruneCut")),
       theStripTimeOffset_(iConfig.getParameter<double>("CSCStripTimeOffset")),
       theWireTimeOffset_(iConfig.getParameter<double>("CSCWireTimeOffset")),
@@ -75,10 +74,9 @@ CSCTimingExtractor::CSCTimingExtractor(const edm::ParameterSet& iConfig,
       theWireError_(iConfig.getParameter<double>("CSCWireError")),
       UseWireTime(iConfig.getParameter<bool>("UseWireTime")),
       UseStripTime(iConfig.getParameter<bool>("UseStripTime")),
-      debug(iConfig.getParameter<bool>("debug")) {
-  edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
-  theService = std::make_unique<MuonServiceProxy>(serviceParameters, edm::ConsumesCollector(iC));
-  theMatcher = segMatcher;
+      debug(iConfig.getParameter<bool>("debug")),
+      theMatcher(segMatcher),
+      theService(service) {
 }
 
 CSCTimingExtractor::~CSCTimingExtractor() {}
@@ -89,27 +87,24 @@ CSCTimingExtractor::~CSCTimingExtractor() {}
 
 void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
                                     const std::vector<const CSCSegment*>& segments,
-                                    reco::TrackRef muonTrack,
-                                    const edm::Event& iEvent,
-                                    const edm::EventSetup& iSetup) {
-  theService->update(iSetup);
-
+                                    const reco::Track & muonTrack,
+                                    const edm::Event& iEvent) {
   const GlobalTrackingGeometry* theTrackingGeometry = &*theService->trackingGeometry();
 
   // get the propagator
   edm::ESHandle<Propagator> propagator;
-  iSetup.get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
+  theService->eventSetup().get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
   const Propagator* propag = propagator.product();
 
-  math::XYZPoint pos = muonTrack->innerPosition();
-  math::XYZVector mom = muonTrack->innerMomentum();
-  if (sqrt(muonTrack->innerPosition().mag2()) > sqrt(muonTrack->outerPosition().mag2())) {
-    pos = muonTrack->outerPosition();
-    mom = -1 * muonTrack->outerMomentum();
+  math::XYZPoint pos = muonTrack.innerPosition();
+  math::XYZVector mom = muonTrack.innerMomentum();
+  if (sqrt(muonTrack.innerPosition().mag2()) > sqrt(muonTrack.outerPosition().mag2())) {
+    pos = muonTrack.outerPosition();
+    mom = -1 * muonTrack.outerMomentum();
   }
   GlobalPoint posp(pos.x(), pos.y(), pos.z());
   GlobalVector momv(mom.x(), mom.y(), mom.z());
-  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack->charge(), theService->magneticField().product());
+  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());
 
   // create a collection on TimeMeasurements for the track
   std::vector<TimeMeasurement> tms;
@@ -249,16 +244,15 @@ void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
 
 // ------------ method called to produce the data  ------------
 void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
-                                    reco::TrackRef muonTrack,
-                                    const edm::Event& iEvent,
-                                    const edm::EventSetup& iSetup) {
+                                    const reco::Track& muonTrack,
+                                    const edm::Event& iEvent) {
   if (debug)
     std::cout << " *** CSC Timimng Extractor ***" << std::endl;
 
   // get the CSC segments that were used to construct the muon
-  std::vector<const CSCSegment*> range = theMatcher->matchCSC(*muonTrack, iEvent);
+  std::vector<const CSCSegment*> range = theMatcher->matchCSC(muonTrack, iEvent);
 
-  fillTiming(tmSequence, range, muonTrack, iEvent, iSetup);
+  fillTiming(tmSequence, range, muonTrack, iEvent);
 }
 
 //define this as a plug-in

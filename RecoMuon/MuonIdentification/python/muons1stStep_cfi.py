@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 # -*-SH-*-
 from RecoMuon.MuonIdentification.isolation_cff import *
 from RecoMuon.MuonIdentification.caloCompatibility_cff import *
-from RecoMuon.MuonIdentification.MuonTimingFiller_cfi import *
+from RecoMuon.TrackingTools.MuonTimingFiller_cfi import *
 from RecoMuon.MuonIdentification.MuonShowerDigiFiller_cfi import *
 from RecoMuon.MuonIdentification.TrackerKinkFinder_cfi import *
 from TrackingTools.TrackAssociator.default_cfi import *

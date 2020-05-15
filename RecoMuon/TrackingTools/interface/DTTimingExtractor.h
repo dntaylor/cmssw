@@ -1,5 +1,5 @@
-#ifndef MuonIdentification_DTTimingExtractor_H
-#define MuonIdentification_DTTimingExtractor_H
+#ifndef TrackingTools_DTTimingExtractor_H
+#define TrackingTools_DTTimingExtractor_H
 
 /**\class DTTimingExtractor
  *
@@ -34,7 +34,7 @@
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "RecoMuon/TrackingTools/interface/MuonSegmentMatcher.h"
-#include "RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h"
+#include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -54,7 +54,10 @@ class MuonServiceProxy;
 class DTTimingExtractor {
 public:
   /// Constructor
-  DTTimingExtractor(const edm::ParameterSet&, MuonSegmentMatcher* segMatcher, edm::ConsumesCollector&);
+  DTTimingExtractor(const edm::ParameterSet&,
+                    MuonSegmentMatcher* segMatcher,
+                    edm::ConsumesCollector&,
+                    const MuonServiceProxy* service = nullptr);
 
   /// Destructor
   ~DTTimingExtractor();
@@ -72,14 +75,12 @@ public:
 
   void fillTiming(TimeMeasurementSequence& tmSequence,
                   const std::vector<const DTRecSegment4D*>& segments,
-                  reco::TrackRef muonTrack,
-                  const edm::Event& iEvent,
-                  const edm::EventSetup& iSetup);
+                  const reco::Track& muonTrack,
+                  const edm::Event& iEvent);
 
   void fillTiming(TimeMeasurementSequence& tmSequence,
-                  reco::TrackRef muonTrack,
-                  const edm::Event& iEvent,
-                  const edm::EventSetup& iSetup);
+                  const reco::Track& muonTrack,
+                  const edm::Event& iEvent);
 
 private:
   double fitT0(double& a,
@@ -100,8 +101,8 @@ private:
   bool requireBothProjections_;
   bool debug;
 
-  std::unique_ptr<MuonServiceProxy> theService;
   MuonSegmentMatcher* theMatcher;
+  const MuonServiceProxy* theService;
 };
 
 #endif

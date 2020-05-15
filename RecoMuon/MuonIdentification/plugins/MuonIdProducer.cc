@@ -20,6 +20,7 @@
 
 #include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractorFactory.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
+#include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
 #include "DataFormats/MuonDetId/interface/MuonSubdetId.h"
 #include "DataFormats/MuonDetId/interface/DTChamberId.h"
@@ -73,6 +74,10 @@ MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig) {
   caloCut_ = iConfig.getParameter<double>("minCaloCompatibility");  //CaloMuons
   arbClean_ = iConfig.getParameter<bool>("runArbitrationCleaner");  // muon mesh
 
+  // Load MuonServiceProxy
+  edm::ParameterSet serviceParameters = iConfig.getParameter<edm::ParameterSet>("ServiceParameters");
+  theService = std::make_unique<MuonServiceProxy>(serviceParameters, consumesCollector());
+
   // Load TrackDetectorAssociator parameters
   const edm::ParameterSet parameters = iConfig.getParameter<edm::ParameterSet>("TrackAssociatorParameters");
   edm::ConsumesCollector iC = consumesCollector();
@@ -80,7 +85,7 @@ MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig) {
 
   // Load parameters for the TimingFiller
   edm::ParameterSet timingParameters = iConfig.getParameter<edm::ParameterSet>("TimingFillerParameters");
-  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, consumesCollector());
+  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, iC);
 
   // Load parameters for the ShowerDigiFiller
   if (fillShowerDigis_ && fillMatching_) {
@@ -194,6 +199,9 @@ void MuonIdProducer::init(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   tpfmsCollectionHandle_.clear();
   pickyCollectionHandle_.clear();
   dytCollectionHandle_.clear();
+
+  // Update the services
+  theService->update(iSetup);
 
   edm::ESHandle<Propagator> propagator;
   iSetup.get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
@@ -704,7 +712,7 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) 
     reco::MuonTime rpcTime;
     reco::MuonTimeExtra combinedTime;
 
-    theTimingFiller_->fillTiming(muon, dtTime, cscTime, rpcTime, combinedTime, iEvent, iSetup);
+    theTimingFiller_->fillTiming(muon, dtTime, cscTime, rpcTime, combinedTime, iEvent);
 
     muonTime.nDof = combinedTime.nDof();
     muonTime.timeAtIpInOut = combinedTime.timeAtIpInOut();

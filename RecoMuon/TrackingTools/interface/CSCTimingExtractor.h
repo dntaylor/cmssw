@@ -1,5 +1,5 @@
-#ifndef MuonIdentification_CSCTimingExtractor_H
-#define MuonIdentification_CSCTimingExtractor_H
+#ifndef TrackingTools_CSCTimingExtractor_H
+#define TrackingTools_CSCTimingExtractor_H
 
 /**\class CSCTimingExtractor
  *
@@ -34,7 +34,7 @@
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "RecoMuon/TrackingTools/interface/MuonSegmentMatcher.h"
-#include "RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h"
+#include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -54,7 +54,10 @@ class MuonServiceProxy;
 class CSCTimingExtractor {
 public:
   /// Constructor
-  CSCTimingExtractor(const edm::ParameterSet &, MuonSegmentMatcher *segMatcher, edm::ConsumesCollector &);
+  CSCTimingExtractor(const edm::ParameterSet &,
+                     MuonSegmentMatcher *segMatcher,
+                     edm::ConsumesCollector &,
+                     const MuonServiceProxy* service = nullptr);
 
   /// Destructor
   ~CSCTimingExtractor();
@@ -70,13 +73,11 @@ public:
 
   void fillTiming(TimeMeasurementSequence &tmSequence,
                   const std::vector<const CSCSegment *> &segments,
-                  reco::TrackRef muonTrack,
-                  const edm::Event &iEvent,
-                  const edm::EventSetup &iSetup);
+                  const reco::Track& muonTrack,
+                  const edm::Event &iEvent);
   void fillTiming(TimeMeasurementSequence &tmSequence,
-                  reco::TrackRef muonTrack,
-                  const edm::Event &iEvent,
-                  const edm::EventSetup &iSetup);
+                  const reco::Track& muonTrack,
+                  const edm::Event &iEvent);
 
 private:
   edm::InputTag CSCSegmentTags_;
@@ -90,8 +91,8 @@ private:
   bool UseStripTime;
   bool debug;
 
-  std::unique_ptr<MuonServiceProxy> theService;
   MuonSegmentMatcher *theMatcher;
+  const MuonServiceProxy* theService;
 };
 
 #endif
