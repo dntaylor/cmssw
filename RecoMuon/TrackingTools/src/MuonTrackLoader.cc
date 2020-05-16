@@ -109,7 +109,7 @@ MuonTrackLoader::MuonTrackLoader(ParameterSet& parameterSet,
 
   // timing filler
   edm::ParameterSet timingParameters = parameterSet.getParameter<edm::ParameterSet>("TimingFillerParameters");
-  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, iC);
+  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, iC, service);
 
   // beam spot input tag
   theBeamSpotInputTag = parameterSet.getParameter<edm::InputTag>("beamSpot");
@@ -720,23 +720,30 @@ pair<bool, reco::Track> MuonTrackLoader::buildTrackAtPCA(const Trajectory& traje
     bon = false;
   double ndof = trajectory.ndof(bon);
 
-  // build tmp track for MuonTimingFiller
-  reco::Track tmpTrack(
-      trajectory.chiSquared(), ndof, persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError());
-      
-  // fill timing information
-  reco::MuonTime muonTime;
-  reco::MuonTimeExtra dtTime;
-  reco::MuonTimeExtra cscTime;
-  reco::MuonTime rpcTime;
-  reco::MuonTimeExtra combinedTime;
-
-  theTimingFiller_->fillTiming(tmpTrack, dtTime, cscTime, rpcTime, combinedTime, event);
-
-  double t0 = combinedTime.timeAtIpInOut();
+  double t0 = 0;
   double beta = 0;
-  double covt0t0 = combinedTime.timeAtIpInOutErr() * combinedTime.timeAtIpInOutErr();
+  double covt0t0 = -1;
   double covbetabeta = -1;
+  if (fillTiming) {
+    reco::MuonTime muonTime;
+    reco::MuonTimeExtra dtTime;
+    reco::MuonTimeExtra cscTime;
+    reco::MuonTime rpcTime;
+    reco::MuonTimeExtra combinedTime;
+
+    theTimingFiller_->fillTiming(trajectory, dtTime, cscTime, rpcTime, combinedTime, event);
+
+    t0 = combinedTime.timeAtIpInOut();
+    covt0t0 = combinedTime.timeAtIpInOutErr() * combinedTime.timeAtIpInOutErr();
+
+    // assume mass of muon
+    // could do fit to muon segment times instead for possible HSCP
+    double m_mu = 0.10566;
+    double gamma_mu_sq = 1. + p.mag2() / m_mu / m_mu;
+    double beta_mu = std::sqrt(1. - 1. / gamma_mu_sq);
+    beta = beta_mu;
+    covbetabeta = 0.;
+  }
   reco::Track track(
       trajectory.chiSquared(), ndof, persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError(),
       reco::TrackBase::undefAlgorithm, reco::TrackBase::undefQuality, t0, beta, covt0t0, covbetabeta);

@@ -114,5 +114,6 @@ private:
   bool thePutTkTrackFlag;
   bool theSmoothTkTrackFlag;
   bool theAllowNoVtxFlag;
+  bool fillTiming = true;
 };
 #endif

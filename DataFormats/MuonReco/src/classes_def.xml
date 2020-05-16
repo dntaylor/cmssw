@@ -122,7 +122,8 @@ initial version number of a class which has never been stored before.
   <class name="edm::Association<reco::MuonCollection>" />
   <class name="edm::Wrapper<edm::Association<reco::MuonCollection>>" />
 
-  <class name="reco::MuonQuality" ClassVersion="10">
+  <class name="reco::MuonQuality" ClassVersion="11">
+   <version ClassVersion="11" checksum="1558195289"/>
    <version ClassVersion="10" checksum="3056161366"/>
   </class>
   <class name="std::vector<reco::MuonQuality>"/>

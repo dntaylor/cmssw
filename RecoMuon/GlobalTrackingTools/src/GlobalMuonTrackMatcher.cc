@@ -103,20 +103,6 @@ double GlobalMuonTrackMatcher::match(const TrackCand& sta,
                                      const TrackCand& track,
                                      int matchOption,
                                      int surfaceOption) const {
-  // print some stuff
-  std::cout << "match" << std::endl;
-  std::cout << "inner track hits: " << track.second->recHitsSize()
-            << " p: " << track.second->p()
-            << " beta: " << track.second->beta()
-            << " t0: " << track.second->t0()
-            << " t0Sigma: " << std::copysign(std::sqrt(std::abs(track.second->covt0t0())), track.second->covt0t0())
-            << std::endl;
-  std::cout << "outer track hits: " << sta.second->recHitsSize()
-            << " p: " << sta.second->p()
-            << " beta: " << sta.second->beta()
-            << " t0: " << sta.second->t0()
-            << " t0Sigma: " << std::copysign(std::sqrt(std::abs(sta.second->covt0t0())), sta.second->covt0t0())
-            << std::endl;
   std::pair<TrajectoryStateOnSurface, TrajectoryStateOnSurface> tsosPair;
   if (surfaceOption == 0)
     tsosPair = convertToTSOSMuHit(sta, track);
@@ -137,11 +123,8 @@ double GlobalMuonTrackMatcher::match(const TrackCand& sta,
   } else if (matchOption == 3) {
     return match_dist(tsosPair.first, tsosPair.second);
   } else if (matchOption == 4) {
-    double chi2 = match_Chi2(tsosPair.first, tsosPair.second);
-    double time_chi2 = match_time(sta.second, track.second);
-    if (time_chi2 > 0 && chi2 > 0)
-      return chi2 + time_chi2;
-    return chi2;
+    // time chi2
+    return match_time(sta.second, track.second);
   } else {
     return -1.0;
   }
@@ -227,8 +210,6 @@ vector<GlobalMuonTrackMatcher::TrackCand> GlobalMuonTrackMatcher::match(const Tr
     double loc_chi2 = match_dist(muonTSOS, (*ii).second);
     double deltaR = match_Rpos(muonTSOS, (*ii).second);
     double time_chi2 = match_time(sta.second, (*ii).first.second);
-    if (time_chi2>0 and chi2>0)
-      time_chi2 = time_chi2 + chi2;
 
     LogTrace(category) << "   iTk " << iTkCand << " of " << cands.size() << " eta "
                        << (*ii).second.globalPosition().eta() << " phi " << (*ii).second.globalPosition().phi() << endl;
@@ -314,8 +295,6 @@ vector<GlobalMuonTrackMatcher::TrackCand> GlobalMuonTrackMatcher::match(const Tr
         double chi2 = match_Chi2(muonTSOS, (*is).second);
         double loc_chi2 = match_dist(muonTSOS, (*is).second);
         double time_chi2 = match_time(sta.second, (*is).first.second);
-        if (time_chi2>0 and chi2>0)
-          time_chi2 = time_chi2 + chi2;
         if (distance < min_d)
           min_d = distance;
         if (loc_chi2 < min_de)
@@ -354,9 +333,7 @@ vector<GlobalMuonTrackMatcher::TrackCand> GlobalMuonTrackMatcher::match(const Tr
     double chi2 = match_Chi2(muonTSOS, (*is).second);
     //unused    double loc_chi2 = match_dist(muonTSOS,(*is).second);
     double deltaR = match_Rpos(muonTSOS, (*is).second);
-    double time_chi2 = match_time(sta.second, (*is).first.second);
-    if (time_chi2>0 and chi2>0)
-      time_chi2 = time_chi2 + chi2;
+    //double time_chi2 = match_time(sta.second, (*is).first.second);
 
     // compute quality as the relative ratio to the minimum found for each variable
 
@@ -590,12 +567,6 @@ double GlobalMuonTrackMatcher::match_Chi2(const TrajectoryStateOnSurface& tsos1,
 
   //LogTrace(category) << "Chi2 " << est;
 
-  std::cout << "match_chi2 " << est << std::endl;
-  std::cout << " " << tsos1.localParameters().vector() << std::endl;
-  std::cout << " " << tsos2.localParameters().vector() << std::endl;
-  std::cout << " " << v << std::endl;
-  std::cout << m << std::endl;
-
   return est;
 }
 
@@ -686,8 +657,6 @@ double GlobalMuonTrackMatcher::match_time(const reco::TrackRef sta,
                                           const reco::TrackRef tk) const {
   const string category = "GlobalMuonTrackMatcher";
 
-  std::cout << "match_time" << std::endl;
-
   if (!sta.isAvailable() || !tk.isAvailable())
     return -1;
 
@@ -710,10 +679,6 @@ double GlobalMuonTrackMatcher::match_time(const reco::TrackRef sta,
   }
 
   double est = ROOT::Math::Similarity(v,m);
-
-  std::cout << "match_time " << est << std::endl;
-  std::cout << " " << v << std::endl;
-  std::cout << m << std::endl;
 
   return est;
 }

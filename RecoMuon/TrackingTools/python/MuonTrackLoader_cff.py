@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 from TrackingTools.KalmanUpdators.KFUpdatorESProducer_cfi import *
 from TrackingTools.GeomPropagators.SmartPropagator_cff import *
 from RecoMuon.TrackingTools.MuonUpdatorAtVertex_cff import *
+from RecoMuon.TrackingTools.MuonTimingFiller_cfi import *
 import TrackingTools.KalmanUpdators.Chi2MeasurementEstimator_cfi
 Chi2EstimatorForMuonTrackLoader = TrackingTools.KalmanUpdators.Chi2MeasurementEstimator_cfi.Chi2MeasurementEstimator.clone()
 Chi2EstimatorForMuonTrackLoader.ComponentName = cms.string('Chi2EstimatorForMuonTrackLoader')
@@ -34,6 +35,7 @@ KFSmootherForMuonTrackLoaderL3 = TrackingTools.TrackFitters.KFTrajectorySmoother
 
 MuonTrackLoaderForSTA = cms.PSet(
     TrackLoaderParameters = cms.PSet(
+        TimingFillerBlock,
         MuonUpdatorAtVertex,
         Smoother = cms.string('KFSmootherForMuonTrackLoader'),
         DoSmoothing = cms.bool(False),
@@ -44,6 +46,7 @@ MuonTrackLoaderForSTA = cms.PSet(
 )
 MuonTrackLoaderForGLB = cms.PSet(
     TrackLoaderParameters = cms.PSet(
+        TimingFillerBlock,
         MuonUpdatorAtVertex,
         Smoother = cms.string('KFSmootherForMuonTrackLoader'),
         DoSmoothing = cms.bool(True),
@@ -77,6 +80,7 @@ MuonTrackLoaderForL3 = cms.PSet(
 )
 MuonTrackLoaderForCosmic = cms.PSet(
     TrackLoaderParameters = cms.PSet(
+        TimingFillerBlock,
         MuonUpdatorAtVertexAnyDirection,
         PutTrajectoryIntoEvent = cms.untracked.bool(False),
         VertexConstraint = cms.bool(False),

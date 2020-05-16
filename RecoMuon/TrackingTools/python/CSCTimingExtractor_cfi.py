@@ -2,13 +2,6 @@ import FWCore.ParameterSet.Config as cms
 
 CSCTimingExtractorBlock = cms.PSet(
   CSCTimingParameters = cms.PSet(
-
-    ServiceParameters = cms.PSet(
-        Propagators = cms.untracked.vstring('SteppingHelixPropagatorAny', 
-            'PropagatorWithMaterial', 
-            'PropagatorWithMaterialOpposite'),
-        RPCLayers = cms.bool(True)
-    ),
     PruneCut = cms.double(9.),
     CSCStripTimeOffset = cms.double(0.),
     CSCWireTimeOffset = cms.double(0.),

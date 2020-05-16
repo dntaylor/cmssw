@@ -58,15 +58,14 @@ MuonSegmentMatcher::MuonSegmentMatcher(const edm::ParameterSet& matchParameters,
 MuonSegmentMatcher::~MuonSegmentMatcher() {}
 
 // member functions
-vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDT(const reco::Track& muon, const edm::Event& event) {
+template <typename T>
+vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDTSegments(const T& muon, const edm::Event& event) {
   using namespace edm;
 
   edm::Handle<DTRecSegment4DCollection> dtRecHits;
   event.getByToken(dtRecHitsToken, dtRecHits);
 
   vector<const DTRecSegment4D*> pointerTo4DSegments;
-
-  std::vector<TrackingRecHit const*> dtHits;
 
   bool segments = false;
 
@@ -81,10 +80,7 @@ vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDT(const reco::Track& muo
     if (!hit->recHits().empty())
       if ((*hit->recHits().begin())->recHits().size() > 1)
         segments = true;
-    dtHits.push_back(hit);
   }
-
-  //  cout << "Muon DT hits found: " << dtHits.size() << " segments " << segments << endl;
 
   double PhiCutParameter = dtRadius_;
   double ZCutParameter = dtRadius_;
@@ -96,14 +92,16 @@ vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDT(const reco::Track& muo
 
     if (segments) {
       // Loop over muon recHits
-      for (auto hit = dtHits.begin(); hit != dtHits.end(); ++hit) {
+      for (auto const& hit : muon.recHits()) {
+        if (!hit->isValid())
+          continue;
         // Pick the one in the same DT Chamber as the muon
-        DetId idT = (*hit)->geographicalId();
+        DetId idT = hit->geographicalId();
         if (!(rechit->geographicalId().rawId() == idT.rawId()))
           continue;
 
         // and compare the local positions
-        LocalPoint segLocal = (*hit)->localPosition();
+        LocalPoint segLocal = hit->localPosition();
         if ((fabs(pointLocal.x() - segLocal.x()) < ZCutParameter) &&
             (fabs(pointLocal.y() - segLocal.y()) < ZCutParameter))
           pointerTo4DSegments.push_back(&(*rechit));
@@ -126,15 +124,19 @@ vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDT(const reco::Track& muo
       DTChamberId chamberSegIdT((segmZ->geographicalId()).rawId());
 
       // Loop over muon recHits
-      for (auto hit = dtHits.begin(); hit != dtHits.end(); ++hit) {
-        if (!(*hit)->isValid())
+      for (auto const& hit : muon.recHits()) {
+        if (!hit->isValid())
+          continue;
+        if (hit->geographicalId().det() != DetId::Muon)
+          continue;
+        if (hit->geographicalId().subdetId() != MuonSubdetId::DT)
           continue;
 
-        DetId idT = (*hit)->geographicalId();
+        DetId idT = hit->geographicalId();
         DTChamberId dtDetIdHitT(idT.rawId());
         DTSuperLayerId dtDetLayerIdHitT(idT.rawId());
 
-        LocalPoint pointLocal = (*hit)->localPosition();
+        LocalPoint pointLocal = hit->localPosition();
 
         if ((chamberSegIdT == dtDetIdHitT) && (dtDetLayerIdHitT.superlayer() == 2))
           countMuonDTHits++;
@@ -176,17 +178,19 @@ vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDT(const reco::Track& muo
       DTChamberId chamberSegIdT((segmPhi->geographicalId()).rawId());
 
       // Loop over muon recHits
-      for (auto hit = dtHits.begin(); hit != dtHits.end(); ++hit) {
-        if (!(*hit)->isValid())
+      for (auto const& hit : muon.recHits()) {
+        if (!hit->isValid())
+          continue;
+        if (hit->geographicalId().det() != DetId::Muon)
+          continue;
+        if (hit->geographicalId().subdetId() != MuonSubdetId::DT)
           continue;
 
-        DetId idT = (*hit)->geographicalId();
+        DetId idT = hit->geographicalId();
         DTChamberId dtDetIdHitT(idT.rawId());
         DTSuperLayerId dtDetLayerIdHitT(idT.rawId());
 
-        LocalPoint pointLocal =
-            (*hit)
-                ->localPosition();  //Localposition is in DTLayer http://cmslxr.fnal.gov/lxr/source/DataFormats/DTRecHit/interface/DTRecHit1D.h
+        LocalPoint pointLocal = hit->localPosition();  //Localposition is in DTLayer http://cmslxr.fnal.gov/lxr/source/DataFormats/DTRecHit/interface/DTRecHit1D.h
 
         if ((chamberSegIdT == dtDetIdHitT) &&
             ((dtDetLayerIdHitT.superlayer() == 1) || (dtDetLayerIdHitT.superlayer() == 3)))
@@ -234,7 +238,8 @@ vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDT(const reco::Track& muo
   return pointerTo4DSegments;
 }
 
-vector<const CSCSegment*> MuonSegmentMatcher::matchCSC(const reco::Track& muon, const edm::Event& event) {
+template <typename T>
+vector<const CSCSegment*> MuonSegmentMatcher::matchCSCSegments(const T& muon, const edm::Event& event) {
   using namespace edm;
 
   edm::Handle<CSCSegmentCollection> allSegmentsCSC;
@@ -333,7 +338,8 @@ vector<const CSCSegment*> MuonSegmentMatcher::matchCSC(const reco::Track& muon, 
   return pointerToCSCSegments;
 }
 
-vector<const RPCRecHit*> MuonSegmentMatcher::matchRPC(const reco::Track& muon, const edm::Event& event) {
+template <typename T>
+vector<const RPCRecHit*> MuonSegmentMatcher::matchRPCRecHits(const T& muon, const edm::Event& event) {
   using namespace edm;
 
   edm::Handle<RPCRecHitCollection> rpcRecHits;
@@ -382,6 +388,14 @@ vector<const RPCRecHit*> MuonSegmentMatcher::matchRPC(const reco::Track& muon, c
 
   return pointerToRPCRecHits;
 }
+
+
+template vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDTSegments(const reco::Track&, const edm::Event&);
+template vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDTSegments(const Trajectory&, const edm::Event&);
+template vector<const CSCSegment*> MuonSegmentMatcher::matchCSCSegments(const reco::Track&, const edm::Event&);
+template vector<const CSCSegment*> MuonSegmentMatcher::matchCSCSegments(const Trajectory&, const edm::Event&);
+template vector<const RPCRecHit*> MuonSegmentMatcher::matchRPCRecHits(const reco::Track&, const edm::Event&);
+template vector<const RPCRecHit*> MuonSegmentMatcher::matchRPCRecHits(const Trajectory&, const edm::Event&);
 
 //define this as a plug-in
 //DEFINE_FWK_MODULE(MuonSegmentMatcher);

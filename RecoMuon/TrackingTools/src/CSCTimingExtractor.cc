@@ -17,7 +17,6 @@
 #include "RecoMuon/TrackingTools/interface/CSCTimingExtractor.h"
 
 // user include files
-#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 
@@ -65,7 +64,6 @@ namespace edm {
 //
 CSCTimingExtractor::CSCTimingExtractor(const edm::ParameterSet& iConfig,
                                        MuonSegmentMatcher* segMatcher,
-                                       edm::ConsumesCollector& iC,
                                        const MuonServiceProxy* service)
     : thePruneCut_(iConfig.getParameter<double>("PruneCut")),
       theStripTimeOffset_(iConfig.getParameter<double>("CSCStripTimeOffset")),
@@ -87,8 +85,7 @@ CSCTimingExtractor::~CSCTimingExtractor() {}
 
 void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
                                     const std::vector<const CSCSegment*>& segments,
-                                    const reco::Track & muonTrack,
-                                    const edm::Event& iEvent) {
+                                    FreeTrajectoryState muonFTS) {
   const GlobalTrackingGeometry* theTrackingGeometry = &*theService->trackingGeometry();
 
   // get the propagator
@@ -96,15 +93,8 @@ void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
   theService->eventSetup().get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
   const Propagator* propag = propagator.product();
 
-  math::XYZPoint pos = muonTrack.innerPosition();
-  math::XYZVector mom = muonTrack.innerMomentum();
-  if (sqrt(muonTrack.innerPosition().mag2()) > sqrt(muonTrack.outerPosition().mag2())) {
-    pos = muonTrack.outerPosition();
-    mom = -1 * muonTrack.outerMomentum();
-  }
-  GlobalPoint posp(pos.x(), pos.y(), pos.z());
-  GlobalVector momv(mom.x(), mom.y(), mom.z());
-  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());
+  // initial position
+  GlobalPoint posp(muonFTS.position().x(), muonFTS.position().y(), muonFTS.position().z());
 
   // create a collection on TimeMeasurements for the track
   std::vector<TimeMeasurement> tms;
@@ -251,8 +241,72 @@ void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
 
   // get the CSC segments that were used to construct the muon
   std::vector<const CSCSegment*> range = theMatcher->matchCSC(muonTrack, iEvent);
-
   fillTiming(tmSequence, range, muonTrack, iEvent);
+}
+
+void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
+                                    const std::vector<const CSCSegment*>& segments,
+                                    const reco::Track& muonTrack,
+                                    const edm::Event& iEvent) {
+
+  // create the FreeTrajectoryState
+  math::XYZPoint pos = muonTrack.innerPosition();
+  math::XYZVector mom = muonTrack.innerMomentum();
+  if (sqrt(muonTrack.innerPosition().mag2()) > sqrt(muonTrack.outerPosition().mag2())) {
+    pos = muonTrack.outerPosition();
+    mom = -1 * muonTrack.outerMomentum();
+  }
+  GlobalPoint posp(pos.x(), pos.y(), pos.z());
+  GlobalVector momv(mom.x(), mom.y(), mom.z());
+  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());
+
+  // and fill
+  fillTiming(tmSequence, segments, muonFTS);
+}
+
+void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
+                                    const Trajectory& muonTrack,
+                                    const edm::Event& iEvent) {
+  if (debug)
+    std::cout << " *** CSC Timimng Extractor ***" << std::endl;
+
+  // get the CSC segments that were used to construct the muon
+  std::vector<const CSCSegment*> range = theMatcher->matchCSC(muonTrack, iEvent);
+
+  // create the FreeTrajectoryState
+  TrajectoryStateOnSurface outerTSOS;
+  TrajectoryStateOnSurface innerTSOS;
+
+  if (muonTrack.direction() == alongMomentum) {
+    outerTSOS = muonTrack.lastMeasurement().updatedState();
+    innerTSOS = muonTrack.firstMeasurement().updatedState();
+  } else if (muonTrack.direction() == oppositeToMomentum) {
+    outerTSOS = muonTrack.firstMeasurement().updatedState();
+    innerTSOS = muonTrack.lastMeasurement().updatedState();
+  }
+
+  GlobalPoint x = innerTSOS.globalParameters().position();
+  GlobalVector p = innerTSOS.globalParameters().momentum();
+  math::XYZPoint inpos(x.x(), x.y(), x.z());
+  math::XYZVector inmom(p.x(), p.y(), p.z());
+
+  x = outerTSOS.globalParameters().position();
+  p = outerTSOS.globalParameters().momentum();
+  math::XYZPoint outpos(x.x(), x.y(), x.z());
+  math::XYZVector outmom(p.x(), p.y(), p.z());
+
+  math::XYZPoint pos = inpos;
+  math::XYZVector mom = inmom;
+  if (sqrt(inpos.mag2()) > sqrt(outpos.mag2())) {
+    pos = outpos;
+    mom = -1 * outmom;
+  }
+  GlobalPoint posp(pos.x(), pos.y(), pos.z());
+  GlobalVector momv(mom.x(), mom.y(), mom.z());
+  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)innerTSOS.charge(), theService->magneticField().product());
+
+  // and fill
+  fillTiming(tmSequence, range, muonFTS);
 }
 
 //define this as a plug-in

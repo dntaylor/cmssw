@@ -36,6 +36,7 @@
 #include "RecoMuon/TrackingTools/interface/MuonSegmentMatcher.h"
 #include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/TrackExtra.h"
@@ -56,8 +57,7 @@ public:
   /// Constructor
   DTTimingExtractor(const edm::ParameterSet&,
                     MuonSegmentMatcher* segMatcher,
-                    edm::ConsumesCollector&,
-                    const MuonServiceProxy* service = nullptr);
+                    const MuonServiceProxy* service);
 
   /// Destructor
   ~DTTimingExtractor();
@@ -74,15 +74,21 @@ public:
   };
 
   void fillTiming(TimeMeasurementSequence& tmSequence,
+                  const reco::Track& muonTrack,
+                  const edm::Event& iEvent);
+  void fillTiming(TimeMeasurementSequence& tmSequence,
                   const std::vector<const DTRecSegment4D*>& segments,
                   const reco::Track& muonTrack,
                   const edm::Event& iEvent);
-
   void fillTiming(TimeMeasurementSequence& tmSequence,
-                  const reco::Track& muonTrack,
+                  const Trajectory& muonTrack,
                   const edm::Event& iEvent);
 
 private:
+  void fillTiming(TimeMeasurementSequence& tmSequence,
+                  const std::vector<const DTRecSegment4D*>& segments,
+                  FreeTrajectoryState muonFTS);
+
   double fitT0(double& a,
                double& b,
                const std::vector<double>& xl,

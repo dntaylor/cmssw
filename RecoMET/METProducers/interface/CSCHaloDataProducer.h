@@ -112,7 +112,7 @@
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 
-#include "RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h"
+#include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 #include "RecoMuon/TrackingTools/interface/MuonPatternRecoDumper.h"
 #include "RecoMuon/TrackingTools/interface/MuonSegmentMatcher.h"
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHitBuilder.h"

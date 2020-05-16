@@ -17,7 +17,6 @@
 #include "RecoMuon/TrackingTools/interface/DTTimingExtractor.h"
 
 // user include files
-#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 
@@ -73,7 +72,6 @@ class MuonServiceProxy;
 //
 DTTimingExtractor::DTTimingExtractor(const edm::ParameterSet& iConfig,
                                      MuonSegmentMatcher* segMatcher,
-                                     edm::ConsumesCollector& iC,
                                      const MuonServiceProxy* service)
     : theHitsMin_(iConfig.getParameter<int>("HitsMin")),
       thePruneCut_(iConfig.getParameter<double>("PruneCut")),
@@ -95,8 +93,7 @@ DTTimingExtractor::~DTTimingExtractor() {}
 //
 void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
                                    const std::vector<const DTRecSegment4D*>& segments,
-                                   const reco::Track& muonTrack,
-                                   const edm::Event& iEvent) {
+                                   FreeTrajectoryState muonFTS) {
   if (debug)
     std::cout << " *** DT Timimng Extractor ***" << std::endl;
 
@@ -111,11 +108,8 @@ void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
   theService->eventSetup().get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
   const Propagator* propag = propagator.product();
 
-  math::XYZPoint pos = muonTrack.innerPosition();
-  math::XYZVector mom = muonTrack.innerMomentum();
-  GlobalPoint posp(pos.x(), pos.y(), pos.z());
-  GlobalVector momv(mom.x(), mom.y(), mom.z());
-  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());
+  // initial position
+  GlobalPoint posp(muonFTS.position().x(), muonFTS.position().y(), muonFTS.position().z());
 
   // create a collection on TimeMeasurements for the track
   std::vector<TimeMeasurement> tms;
@@ -384,7 +378,53 @@ void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
 
   if (debug)
     std::cout << " The muon track matches " << range.size() << " segments." << std::endl;
+
   fillTiming(tmSequence, range, muonTrack, iEvent);
+}
+
+void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
+                                   const std::vector<const DTRecSegment4D*>& segments,
+                                   const reco::Track& muonTrack,
+                                   const edm::Event& iEvent) {
+
+  // create the FreeTrajectoryState
+  math::XYZPoint pos = muonTrack.innerPosition();
+  math::XYZVector mom = muonTrack.innerMomentum();
+  GlobalPoint posp(pos.x(), pos.y(), pos.z());
+  GlobalVector momv(mom.x(), mom.y(), mom.z());
+  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());
+
+  // and fill
+  fillTiming(tmSequence, segments, muonFTS);
+}
+
+void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
+                                   const Trajectory& muonTrack,
+                                   const edm::Event& iEvent) {
+  // get the DT segments that were used to construct the muon
+  std::vector<const DTRecSegment4D*> range = theMatcher->matchDT(muonTrack, iEvent);
+
+  if (debug)
+    std::cout << " The muon track matches " << range.size() << " segments." << std::endl;
+
+  // create the FreeTrajectoryState
+  TrajectoryStateOnSurface outerTSOS;
+  TrajectoryStateOnSurface innerTSOS;
+
+  if (muonTrack.direction() == alongMomentum) {
+    outerTSOS = muonTrack.lastMeasurement().updatedState();
+    innerTSOS = muonTrack.firstMeasurement().updatedState();
+  } else if (muonTrack.direction() == oppositeToMomentum) {
+    outerTSOS = muonTrack.firstMeasurement().updatedState();
+    innerTSOS = muonTrack.lastMeasurement().updatedState();
+  }
+
+  GlobalPoint posp = innerTSOS.globalParameters().position();
+  GlobalVector momv = innerTSOS.globalParameters().momentum();
+  FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)innerTSOS.charge(), theService->magneticField().product());
+
+  // and fill
+  fillTiming(tmSequence, range, muonFTS);
 }
 
 double DTTimingExtractor::fitT0(double& a,

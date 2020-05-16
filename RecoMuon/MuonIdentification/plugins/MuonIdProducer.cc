@@ -85,7 +85,7 @@ MuonIdProducer::MuonIdProducer(const edm::ParameterSet& iConfig) {
 
   // Load parameters for the TimingFiller
   edm::ParameterSet timingParameters = iConfig.getParameter<edm::ParameterSet>("TimingFillerParameters");
-  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, iC);
+  theTimingFiller_ = std::make_unique<MuonTimingFiller>(timingParameters, iC, theService.get());
 
   // Load parameters for the ShowerDigiFiller
   if (fillShowerDigis_ && fillMatching_) {

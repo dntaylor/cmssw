@@ -116,8 +116,8 @@ void GlobalTrackQualityProducer::produce(edm::Event& iEvent, const edm::EventSet
     LogTrace(theCategory) << "GLBQual: trackProbability " << glbTrackProbability;
 
     // Fill the STA-TK match information
-    float chi2, d, dist, Rpos;
-    chi2 = d = dist = Rpos = -1.0;
+    float chi2, d, dist, Rpos, time_chi2;
+    chi2 = d = dist = Rpos = time_chi2 = -1.0;
     bool passTight = false;
     typedef MuonTrajectoryBuilder::TrackCand TrackCand;
     if (linkCollectionHandle.isValid()) {
@@ -137,6 +137,7 @@ void GlobalTrackQualityProducer::produce(edm::Event& iEvent, const edm::EventSet
           d = theGlbMatcher->match(staCand, tkCand, 1, 0);
           Rpos = theGlbMatcher->match(staCand, tkCand, 2, 0);
           dist = theGlbMatcher->match(staCand, tkCand, 3, 0);
+          time_chi2 = theGlbMatcher->match(staCand, tkCand, 4, 0);
           passTight = theGlbMatcher->matchTight(staCand, tkCand);
         }
       }
@@ -159,6 +160,7 @@ void GlobalTrackQualityProducer::produce(edm::Event& iEvent, const edm::EventSet
     muQual.tightMatch = passTight;
     muQual.chi2LocalPosition = dist;
     muQual.chi2LocalMomentum = chi2;
+    muQual.chi2Time = time_chi2;
     muQual.localDistance = d;
     muQual.globalDeltaEtaPhi = Rpos;
     muQual.glbTrackProbability = glbTrackProbability;

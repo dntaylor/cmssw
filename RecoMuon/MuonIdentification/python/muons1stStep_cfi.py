@@ -4,10 +4,12 @@ import FWCore.ParameterSet.Config as cms
 from RecoMuon.MuonIdentification.isolation_cff import *
 from RecoMuon.MuonIdentification.caloCompatibility_cff import *
 from RecoMuon.TrackingTools.MuonTimingFiller_cfi import *
+from RecoMuon.TrackingTools.MuonServiceProxy_cff import *
 from RecoMuon.MuonIdentification.MuonShowerDigiFiller_cfi import *
 from RecoMuon.MuonIdentification.TrackerKinkFinder_cfi import *
 from TrackingTools.TrackAssociator.default_cfi import *
 muons1stStep = cms.EDProducer("MuonIdProducer",
+    MuonServiceProxy,
     # MuonCaloCompatibility
     MuonCaloCompatibilityBlock,
     # TrackDetectorAssociator

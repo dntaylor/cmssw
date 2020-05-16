@@ -113,7 +113,7 @@
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "MagneticField/Engine/interface/MagneticField.h"
 
-#include "RecoMuon/MuonIdentification/interface/TimeMeasurementSequence.h"
+#include "RecoMuon/TrackingTools/interface/TimeMeasurementSequence.h"
 #include "RecoMuon/TrackingTools/interface/MuonSegmentMatcher.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"

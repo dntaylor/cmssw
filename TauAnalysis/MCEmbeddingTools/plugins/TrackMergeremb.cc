@@ -22,7 +22,7 @@
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
-#include "RecoMuon/MuonIdentification/interface/MuonTimingFiller.h"
+#include "RecoMuon/TrackingTools/interface/MuonTimingFiller.h"
 #include "DataFormats/MuonReco/interface/MuonCocktails.h"
 #include "DataFormats/MuonReco/interface/MuonTime.h"
 #include "DataFormats/MuonReco/interface/MuonTimeExtra.h"

@@ -31,6 +31,7 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "TrackingTools/PatternTools/interface/Trajectory.h"
 #include "DataFormats/MuonReco/interface/MuonTimeExtra.h"
 #include "RecoMuon/TrackingTools/interface/DTTimingExtractor.h"
 #include "RecoMuon/TrackingTools/interface/CSCTimingExtractor.h"
@@ -45,7 +46,7 @@ class MuonTimingFiller {
 public:
   MuonTimingFiller(const edm::ParameterSet&,
                    edm::ConsumesCollector& iC,
-                   const MuonServiceProxy* service = nullptr);
+                   const MuonServiceProxy* service);
   ~MuonTimingFiller();
   void fillTiming(const reco::Muon& muon,
                   reco::MuonTimeExtra& dtTime,
@@ -59,10 +60,17 @@ public:
                   reco::MuonTime& rpcTime,
                   reco::MuonTimeExtra& combinedTime,
                   edm::Event& iEvent);
+  void fillTiming(const Trajectory& muon,
+                  reco::MuonTimeExtra& dtTime,
+                  reco::MuonTimeExtra& cscTime,
+                  reco::MuonTime& rpcTime,
+                  reco::MuonTimeExtra& combinedTime,
+                  edm::Event& iEvent);
 
 private:
   void fillTimeFromMeasurements(const TimeMeasurementSequence& tmSeq, reco::MuonTimeExtra& muTime);
-  void fillRPCTime(const reco::Track& muon, reco::MuonTime& muTime, edm::Event& iEvent);
+  template <typename T>
+  void fillRPCTime(const T& muon, reco::MuonTime& muTime, edm::Event& iEvent);
   void rawFit(
       double& a, double& da, double& b, double& db, const std::vector<double>& hitsx, const std::vector<double>& hitsy);
   void addEcalTime(const reco::Muon& muon, TimeMeasurementSequence& cmbSeq);

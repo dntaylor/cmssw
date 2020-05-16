@@ -27,6 +27,8 @@ namespace reco {
     bool tightMatch;
     /// the tail probability (-ln(P)) of the global fit
     float glbTrackProbability;
+    /// chi2 value for the STA-TK matching of time
+    float chi2Time;
 
     /// Kink position for the tracker stub and global track
     math::XYZPoint tkKink_position;
@@ -43,7 +45,8 @@ namespace reco {
           localDistance(0),
           globalDeltaEtaPhi(0),
           tightMatch(false),
-          glbTrackProbability(0) {}
+          glbTrackProbability(0),
+          chi2Time(0) {}
   };
 }  // namespace reco
 #endif
