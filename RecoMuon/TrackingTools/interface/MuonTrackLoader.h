@@ -87,7 +87,9 @@ private:
   std::pair<bool, reco::Track> buildTrackAtPCA(const Trajectory& trajectory, const reco::BeamSpot&, edm::Event&) const;
 
   /// Takes a track at the PCA and applies the vertex constriant
-  std::pair<bool, reco::Track> buildTrackUpdatedAtPCA(const reco::Track& trackAtPCA, const reco::BeamSpot&, edm::Event&) const;
+  std::pair<bool, reco::Track> buildTrackUpdatedAtPCA(const reco::Track& trackAtPCA,
+                                                      const reco::BeamSpot&,
+                                                      edm::Event&) const;
 
   reco::TrackExtra buildTrackExtra(const Trajectory&) const;
 

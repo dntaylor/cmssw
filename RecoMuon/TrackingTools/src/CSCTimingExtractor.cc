@@ -74,8 +74,7 @@ CSCTimingExtractor::CSCTimingExtractor(const edm::ParameterSet& iConfig,
       UseStripTime(iConfig.getParameter<bool>("UseStripTime")),
       debug(iConfig.getParameter<bool>("debug")),
       theMatcher(segMatcher),
-      theService(service) {
-}
+      theService(service) {}
 
 CSCTimingExtractor::~CSCTimingExtractor() {}
 
@@ -248,7 +247,6 @@ void CSCTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
                                     const std::vector<const CSCSegment*>& segments,
                                     const reco::Track& muonTrack,
                                     const edm::Event& iEvent) {
-
   // create the FreeTrajectoryState
   math::XYZPoint pos = muonTrack.innerPosition();
   math::XYZVector mom = muonTrack.innerMomentum();

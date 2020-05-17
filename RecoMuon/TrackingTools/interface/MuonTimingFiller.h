@@ -44,9 +44,7 @@ class MuonServiceProxy;
 
 class MuonTimingFiller {
 public:
-  MuonTimingFiller(const edm::ParameterSet&,
-                   edm::ConsumesCollector& iC,
-                   const MuonServiceProxy* service);
+  MuonTimingFiller(const edm::ParameterSet&, edm::ConsumesCollector& iC, const MuonServiceProxy* service);
   ~MuonTimingFiller();
   void fillTiming(const reco::Muon& muon,
                   reco::MuonTimeExtra& dtTime,

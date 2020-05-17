@@ -653,8 +653,7 @@ double GlobalMuonTrackMatcher::match_dist(const TrajectoryStateOnSurface& sta,
 //
 // calculate delta time between two tracks
 //
-double GlobalMuonTrackMatcher::match_time(const reco::TrackRef sta,
-                                          const reco::TrackRef tk) const {
+double GlobalMuonTrackMatcher::match_time(const reco::TrackRef sta, const reco::TrackRef tk) const {
   const string category = "GlobalMuonTrackMatcher";
 
   if (!sta.isAvailable() || !tk.isAvailable())
@@ -663,7 +662,7 @@ double GlobalMuonTrackMatcher::match_time(const reco::TrackRef sta,
   // check for time, if either invalid, return -1
   double t1t1 = sta->covt0t0();
   double t2t2 = tk->covt0t0();
-  if (t1t1<0 || t2t2<0)
+  if (t1t1 < 0 || t2t2 < 0)
     return -1;
 
   // a bit verbose, but may need to add correlation later
@@ -678,7 +677,7 @@ double GlobalMuonTrackMatcher::match_time(const reco::TrackRef sta,
     return -1;
   }
 
-  double est = ROOT::Math::Similarity(v,m);
+  double est = ROOT::Math::Similarity(v, m);
 
   return est;
 }

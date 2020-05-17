@@ -190,7 +190,8 @@ vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDTSegments(const T& muon,
         DTChamberId dtDetIdHitT(idT.rawId());
         DTSuperLayerId dtDetLayerIdHitT(idT.rawId());
 
-        LocalPoint pointLocal = hit->localPosition();  //Localposition is in DTLayer http://cmslxr.fnal.gov/lxr/source/DataFormats/DTRecHit/interface/DTRecHit1D.h
+        LocalPoint pointLocal =
+            hit->localPosition();  //Localposition is in DTLayer http://cmslxr.fnal.gov/lxr/source/DataFormats/DTRecHit/interface/DTRecHit1D.h
 
         if ((chamberSegIdT == dtDetIdHitT) &&
             ((dtDetLayerIdHitT.superlayer() == 1) || (dtDetLayerIdHitT.superlayer() == 3)))
@@ -388,7 +389,6 @@ vector<const RPCRecHit*> MuonSegmentMatcher::matchRPCRecHits(const T& muon, cons
 
   return pointerToRPCRecHits;
 }
-
 
 template vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDTSegments(const reco::Track&, const edm::Event&);
 template vector<const DTRecSegment4D*> MuonSegmentMatcher::matchDTSegments(const Trajectory&, const edm::Event&);

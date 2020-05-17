@@ -744,9 +744,18 @@ pair<bool, reco::Track> MuonTrackLoader::buildTrackAtPCA(const Trajectory& traje
     beta = beta_mu;
     covbetabeta = 0.;
   }
-  reco::Track track(
-      trajectory.chiSquared(), ndof, persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError(),
-      reco::TrackBase::undefAlgorithm, reco::TrackBase::undefQuality, t0, beta, covt0t0, covbetabeta);
+  reco::Track track(trajectory.chiSquared(),
+                    ndof,
+                    persistentPCA,
+                    persistentMomentum,
+                    ftsAtVtx.charge(),
+                    ftsAtVtx.curvilinearError(),
+                    reco::TrackBase::undefAlgorithm,
+                    reco::TrackBase::undefQuality,
+                    t0,
+                    beta,
+                    covt0t0,
+                    covbetabeta);
 
   return pair<bool, reco::Track>(true, track);
 }
@@ -781,9 +790,18 @@ pair<bool, reco::Track> MuonTrackLoader::buildTrackUpdatedAtPCA(const reco::Trac
   double beta = track.beta();
   double covt0t0 = track.covt0t0();
   double covbetabeta = track.covBetaBeta();
-  reco::Track updatedTrack(
-      track.chi2(), track.ndof(), persistentPCA, persistentMomentum, ftsAtVtx.charge(), ftsAtVtx.curvilinearError(),
-      reco::TrackBase::undefAlgorithm, reco::TrackBase::undefQuality, t0, beta, covt0t0, covbetabeta);
+  reco::Track updatedTrack(track.chi2(),
+                           track.ndof(),
+                           persistentPCA,
+                           persistentMomentum,
+                           ftsAtVtx.charge(),
+                           ftsAtVtx.curvilinearError(),
+                           reco::TrackBase::undefAlgorithm,
+                           reco::TrackBase::undefQuality,
+                           t0,
+                           beta,
+                           covt0t0,
+                           covbetabeta);
 
   return pair<bool, reco::Track>(true, updatedTrack);
 }

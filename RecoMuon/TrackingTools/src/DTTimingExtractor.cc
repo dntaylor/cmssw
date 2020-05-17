@@ -83,8 +83,7 @@ DTTimingExtractor::DTTimingExtractor(const edm::ParameterSet& iConfig,
       requireBothProjections_(iConfig.getParameter<bool>("RequireBothProjections")),
       debug(iConfig.getParameter<bool>("debug")),
       theMatcher(segMatcher),
-      theService(service) {
-}
+      theService(service) {}
 
 DTTimingExtractor::~DTTimingExtractor() {}
 
@@ -386,10 +385,9 @@ void DTTimingExtractor::fillTiming(TimeMeasurementSequence& tmSequence,
                                    const std::vector<const DTRecSegment4D*>& segments,
                                    const reco::Track& muonTrack,
                                    const edm::Event& iEvent) {
-
   // create the FreeTrajectoryState
-  math::XYZPoint pos = muonTrack.innerPosition();
-  math::XYZVector mom = muonTrack.innerMomentum();
+  const math::XYZPoint& pos = muonTrack.innerPosition();
+  const math::XYZVector& mom = muonTrack.innerMomentum();
   GlobalPoint posp(pos.x(), pos.y(), pos.z());
   GlobalVector momv(mom.x(), mom.y(), mom.z());
   FreeTrajectoryState muonFTS(posp, momv, (TrackCharge)muonTrack.charge(), theService->magneticField().product());

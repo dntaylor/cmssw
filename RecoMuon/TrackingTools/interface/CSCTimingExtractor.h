@@ -55,9 +55,7 @@ class MuonServiceProxy;
 class CSCTimingExtractor {
 public:
   /// Constructor
-  CSCTimingExtractor(const edm::ParameterSet &,
-                     MuonSegmentMatcher *segMatcher,
-                     const MuonServiceProxy* service);
+  CSCTimingExtractor(const edm::ParameterSet &, MuonSegmentMatcher *segMatcher, const MuonServiceProxy *service);
 
   /// Destructor
   ~CSCTimingExtractor();
@@ -71,16 +69,12 @@ public:
     float weightInvbeta;
   };
 
-  void fillTiming(TimeMeasurementSequence &tmSequence,
-                  const reco::Track& muonTrack,
-                  const edm::Event &iEvent);
+  void fillTiming(TimeMeasurementSequence &tmSequence, const reco::Track &muonTrack, const edm::Event &iEvent);
   void fillTiming(TimeMeasurementSequence &tmSequence,
                   const std::vector<const CSCSegment *> &segments,
-                  const reco::Track& muonTrack,
+                  const reco::Track &muonTrack,
                   const edm::Event &iEvent);
-  void fillTiming(TimeMeasurementSequence &tmSequence,
-                  const Trajectory& muonTrack,
-                  const edm::Event &iEvent);
+  void fillTiming(TimeMeasurementSequence &tmSequence, const Trajectory &muonTrack, const edm::Event &iEvent);
 
 private:
   void fillTiming(TimeMeasurementSequence &tmSequence,
@@ -98,7 +92,7 @@ private:
   bool debug;
 
   MuonSegmentMatcher *theMatcher;
-  const MuonServiceProxy* theService;
+  const MuonServiceProxy *theService;
 };
 
 #endif
