@@ -944,12 +944,15 @@ void MuonIdProducer::fillMuonId(edm::Event& iEvent,
       if (matchedSegment.yErr > 0 && matchedChamber.yErr > 0 && matchedSegChPullY < maxAbsPullY_)
         matchedY = true;
       if (matchedX && matchedY) {
-        if (matchedChamber.id.subdetId() == MuonSubdetId::ME0)
-          matchedChamber.me0Matches.push_back(matchedSegment);
-        else if (matchedChamber.id.subdetId() == MuonSubdetId::GEM)
+        // not all segments are equal, GEM separate, but include ME0 as a segment in the standard matches
+        if (matchedChamber.id.subdetId() == MuonSubdetId::GEM)
           matchedChamber.gemMatches.push_back(matchedSegment);
-        else
+        else {
+          // for backwards compatibility, may remove me0Matches
+          if (matchedChamber.id.subdetId() == MuonSubdetId::ME0)
+            matchedChamber.me0Matches.push_back(matchedSegment);
           matchedChamber.segmentMatches.push_back(matchedSegment);
+        }
       }
     }
     muonChamberMatches.push_back(matchedChamber);
